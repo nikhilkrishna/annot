@@ -6,9 +6,7 @@
 use std::collections::BTreeMap;
 
 use crate::mcp::tools::SessionImage;
-use crate::state::{
-    Annotation, Bookmark, ContentMetadata, ContentModel, LineOrigin,
-};
+use crate::state::{Annotation, Bookmark, ContentMetadata, ContentModel, LineOrigin};
 use crate::terraform::TerraformRegion;
 
 use super::builder::{BuilderMode, OutputBuilder};
@@ -41,7 +39,10 @@ pub fn format_bookmark(out: &mut OutputBuilder, bookmark: &Bookmark, created_thi
             if let Some(ref project) = bookmark.project_path {
                 b.field("Project", &project.display().to_string());
             }
-            b.field("Created", &bookmark.created_at.format("%Y-%m-%d").to_string());
+            b.field(
+                "Created",
+                &bookmark.created_at.format("%Y-%m-%d").to_string(),
+            );
             b.separator();
             for line in bookmark.snapshot.content().lines() {
                 b.line(line);
@@ -82,7 +83,13 @@ pub fn format_annotation(
         if let Some(line) = content_model.find_line(file_path, context_line_num) {
             if !line.content.trim().is_empty() {
                 if is_diff {
-                    format_diff_context_line(out, content_model, file_path, context_line_num, &line.content);
+                    format_diff_context_line(
+                        out,
+                        content_model,
+                        file_path,
+                        context_line_num,
+                        &line.content,
+                    );
                 } else {
                     out.code_line(context_line_num, &line.content);
                 }
@@ -126,7 +133,10 @@ fn format_diff_header(
 
     for line_num in ann.start_line..=ann.end_line {
         if let Some(line) = content.find_line(file_path, line_num) {
-            if let LineOrigin::Diff { old_line, new_line, .. } = &line.origin {
+            if let LineOrigin::Diff {
+                old_line, new_line, ..
+            } = &line.origin
+            {
                 if let Some(old) = old_line {
                     old_lines.push(*old);
                 }
@@ -197,7 +207,10 @@ fn extract_diff_line_nums(
     content_model
         .find_line(file_path, line_num)
         .and_then(|line| {
-            if let LineOrigin::Diff { old_line, new_line, .. } = &line.origin {
+            if let LineOrigin::Diff {
+                old_line, new_line, ..
+            } = &line.origin
+            {
                 Some((*old_line, *new_line))
             } else {
                 None
@@ -207,10 +220,7 @@ fn extract_diff_line_nums(
 }
 
 /// Calculate the BuilderMode from annotations.
-pub fn calculate_builder_mode(
-    content: &ContentModel,
-    max_line: u32,
-) -> BuilderMode {
+pub fn calculate_builder_mode(content: &ContentModel, max_line: u32) -> BuilderMode {
     let is_diff = matches!(content.metadata, ContentMetadata::Diff(_));
     let line_num_width = max_line.to_string().len();
 
@@ -251,7 +261,13 @@ pub fn format_terraform_region(
         if let Some(line) = content_model.find_line(file_path, context_line_num) {
             if !line.content.trim().is_empty() {
                 if is_diff {
-                    format_diff_context_line(out, content_model, file_path, context_line_num, &line.content);
+                    format_diff_context_line(
+                        out,
+                        content_model,
+                        file_path,
+                        context_line_num,
+                        &line.content,
+                    );
                 } else {
                     out.code_line(context_line_num, &line.content);
                 }
@@ -296,7 +312,10 @@ fn format_diff_header_for_terraform(
 
     for line_num in region.start_line..=region.end_line {
         if let Some(line) = content.find_line(file_path, line_num) {
-            if let LineOrigin::Diff { old_line, new_line, .. } = &line.origin {
+            if let LineOrigin::Diff {
+                old_line, new_line, ..
+            } = &line.origin
+            {
                 if let Some(old) = old_line {
                     old_lines.push(*old);
                 }

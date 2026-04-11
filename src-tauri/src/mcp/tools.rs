@@ -49,7 +49,9 @@ pub struct ExitModeInput {
     #[schemars(description = "context/instruction for downstream processing")]
     pub instruction: String,
 
-    #[schemars(description = "color name: green, yellow, red, blue, purple, orange (auto-assigned if empty)")]
+    #[schemars(
+        description = "color name: green, yellow, red, blue, purple, orange (auto-assigned if empty)"
+    )]
     pub color: Option<String>,
 }
 
@@ -75,7 +77,9 @@ pub struct SessionOutput {
 impl ExitModeInput {
     /// Map color name to CSS hex color.
     fn color_to_hex(color: &Option<String>, index: usize) -> String {
-        let default_colors = ["#22c55e", "#eab308", "#ef4444", "#3b82f6", "#a855f7", "#f97316"];
+        let default_colors = [
+            "#22c55e", "#eab308", "#ef4444", "#3b82f6", "#a855f7", "#f97316",
+        ];
 
         match color.as_deref() {
             Some("green") => "#22c55e".to_string(),
@@ -125,6 +129,8 @@ pub struct ListBookmarksInput {
     #[schemars(description = "Filter by project path")]
     pub project: Option<String>,
 
-    #[schemars(description = "Sort order by creation date: \"asc\" (oldest first, default) or \"desc\" (newest first)")]
+    #[schemars(
+        description = "Sort order by creation date: \"asc\" (oldest first, default) or \"desc\" (newest first)"
+    )]
     pub sort: Option<String>,
 }

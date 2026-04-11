@@ -150,7 +150,9 @@ fn main() {
 
     // Parse CLI exit modes and prepend as transient
     if !cli.exit_modes.is_empty() {
-        let default_colors = ["#22c55e", "#eab308", "#ef4444", "#3b82f6", "#a855f7", "#f97316"];
+        let default_colors = [
+            "#22c55e", "#eab308", "#ef4444", "#3b82f6", "#a855f7", "#f97316",
+        ];
         let transient_modes: Vec<annot_lib::state::ExitMode> = cli
             .exit_modes
             .iter()
@@ -269,15 +271,13 @@ fn handle_bookmarks_command(cmd: &BookmarksCommand) {
             }
         }
 
-        BookmarksCommand::Show { id } => {
-            match find_bookmark(&config, id) {
-                Ok(bookmark) => print_bookmark_markdown(bookmark),
-                Err(e) => {
-                    eprintln!("{}", e);
-                    process::exit(1);
-                }
+        BookmarksCommand::Show { id } => match find_bookmark(&config, id) {
+            Ok(bookmark) => print_bookmark_markdown(bookmark),
+            Err(e) => {
+                eprintln!("{}", e);
+                process::exit(1);
             }
-        }
+        },
 
         BookmarksCommand::Delete { id } => {
             // First resolve the full ID
@@ -343,10 +343,7 @@ fn print_bookmark_markdown(bookmark: &annot_lib::state::Bookmark) {
     println!();
     println!("**Source**: {}", bookmark.snapshot.source_title());
     println!("**Project**: {}", project);
-    println!(
-        "**Created**: {}",
-        bookmark.created_at.format("%B %d, %Y")
-    );
+    println!("**Created**: {}", bookmark.created_at.format("%B %d, %Y"));
     println!();
     println!("---");
     println!();

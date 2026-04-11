@@ -20,7 +20,10 @@ use std::sync::mpsc::Sender;
 use serde::Serialize;
 
 use crate::output::FormatResult;
-use crate::state::{Annotation, ContentMetadata, ContentModel, ContentNode, ContentResponse, FileMetadata, LineRange, UserConfig};
+use crate::state::{
+    Annotation, ContentMetadata, ContentModel, ContentNode, ContentResponse, FileMetadata,
+    LineRange, UserConfig,
+};
 
 /// Key for annotation targets in Review.files.
 /// Distinguishes real file paths from ephemeral/synthetic content.
@@ -48,7 +51,9 @@ impl FileKey {
 
     /// Create a key for ephemeral content.
     pub fn ephemeral(label: impl Into<String>) -> Self {
-        FileKey::Ephemeral { label: label.into() }
+        FileKey::Ephemeral {
+            label: label.into(),
+        }
     }
 
     /// Get the routing path string for this key.
@@ -396,20 +401,28 @@ impl Review {
     /// Get the annotation target for a single-file window with detailed errors.
     /// For diff windows, use resolve_target_mut() which accepts explicit file_index.
     pub fn target_for_window(&self, window_label: &str) -> Result<&AnnotationTarget, String> {
-        let view = self.windows.get(window_label)
+        let view = self
+            .windows
+            .get(window_label)
             .ok_or_else(|| format!("Unknown window: {}", window_label))?;
         match view {
-            WindowView::File { key } => {
-                self.files.get(key).ok_or_else(|| "Target not loaded".into())
+            WindowView::File { key } => self
+                .files
+                .get(key)
+                .ok_or_else(|| "Target not loaded".into()),
+            WindowView::Diff { .. } => {
+                Err("Diff window: use resolve_target_mut with file_index".into())
             }
-            WindowView::Diff { .. } => Err("Diff window: use resolve_target_mut with file_index".into()),
             _ => Err("Window type does not have a single target".into()),
         }
     }
 
     /// Get mutable annotation target for a single-file window.
     /// Returns None for diff/mermaid windows — use resolve_target_mut() for commands.
-    pub fn get_target_for_window_mut(&mut self, window_label: &str) -> Option<&mut AnnotationTarget> {
+    pub fn get_target_for_window_mut(
+        &mut self,
+        window_label: &str,
+    ) -> Option<&mut AnnotationTarget> {
         let view = self.windows.get(window_label)?;
         match view {
             WindowView::File { key } => {
@@ -512,16 +525,16 @@ impl AnnotationTarget {
 
     /// Delete an annotation by range.
     pub fn delete_annotation(&mut self, start_line: u32, end_line: u32) {
-        self.annotations.remove(&LineRange::new(start_line, end_line));
+        self.annotations
+            .remove(&LineRange::new(start_line, end_line));
     }
 
     /// Insert or update a terraform region.
     /// Replaces any overlapping regions with the new one.
     pub fn upsert_terraform(&mut self, region: TerraformRegion) {
         // Remove any regions that overlap with the new one
-        self.terraform_regions.retain(|r| {
-            !(r.start_line <= region.end_line && r.end_line >= region.start_line)
-        });
+        self.terraform_regions
+            .retain(|r| !(r.start_line <= region.end_line && r.end_line >= region.start_line));
         // Add the new region
         self.terraform_regions.push(region);
         // Keep sorted by start_line

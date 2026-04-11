@@ -63,11 +63,11 @@ const STATE_FILE: &str = "window-state.json";
 pub fn save_window_state(window: &WebviewWindow, window_type: WindowType) -> Result<(), String> {
     let pos = window.outer_position().map_err(|e| e.to_string())?;
     let size = window.inner_size().map_err(|e| e.to_string())?;
-    let scale = window.scale_factor().unwrap_or(1.0);
 
     // macOS uses logical coordinates for window positioning
     #[cfg(target_os = "macos")]
     let (x, y, w, h) = {
+        let scale = window.scale_factor().unwrap_or(1.0);
         let logical_pos = pos.to_logical::<i32>(scale);
         let logical_size = size.to_logical::<u32>(scale);
         (

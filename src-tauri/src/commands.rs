@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State, WebviewWindow};
 
 use crate::config::{self, Config, Theme};
+use crate::input::{ContentSource, McpSource};
 use crate::lang::extension_to_fence_language;
 use crate::output::{export_content, export_section, format_json, format_output, OutputMode};
 use crate::review::ActiveReview;
-use crate::input::{ContentSource, McpSource};
 use crate::state::{
     Bookmark, BookmarkSnapshot, ContentMetadata, ContentNode, ContentResponse, ExitMode,
     SessionType, Tag, TagUsageStats,
@@ -406,7 +406,10 @@ pub fn create_bookmark(
         // Auto-derive label from H1 heading for markdown content if not provided
         let label = label.or_else(|| {
             if let ContentMetadata::Markdown(md) = &review.root_view.content().metadata {
-                md.sections.iter().find(|s| s.level == 1).map(|s| s.title.clone())
+                md.sections
+                    .iter()
+                    .find(|s| s.level == 1)
+                    .map(|s| s.title.clone())
             } else {
                 None
             }
@@ -690,7 +693,9 @@ pub fn export_to_obsidian(
 /// Sanitize a filename for Obsidian by removing characters that are invalid in filenames.
 /// Obsidian (and most filesystems) don't allow: \ / :
 fn sanitize_obsidian_filename(name: &str) -> String {
-    name.chars().filter(|c| !matches!(c, '\\' | '/' | ':')).collect()
+    name.chars()
+        .filter(|c| !matches!(c, '\\' | '/' | ':'))
+        .collect()
 }
 
 // --- Replace diff (word-level) ---

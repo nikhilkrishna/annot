@@ -189,15 +189,35 @@ impl Tag {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum ContentNode {
-    Text { text: String },
-    Tag { id: String, name: String, instruction: String },
-    Media { image: String, mime_type: String },
-    Excalidraw { elements: String, image: Option<String> },
-    Replace { original: String, replacement: String },
+    Text {
+        text: String,
+    },
+    Tag {
+        id: String,
+        name: String,
+        instruction: String,
+    },
+    Media {
+        image: String,
+        mime_type: String,
+    },
+    Excalidraw {
+        elements: String,
+        image: Option<String>,
+    },
+    Replace {
+        original: String,
+        replacement: String,
+    },
     /// System-generated error node (e.g., Mermaid syntax error).
-    Error { source: String, message: String },
+    Error {
+        source: String,
+        message: String,
+    },
     /// Pasted text content collapsed into a chip (large paste).
-    Paste { content: String },
+    Paste {
+        content: String,
+    },
     /// Reference to a bookmark (captured moment of attention).
     /// Embeds full bookmark data at insertion time for "detachment" —
     /// if the bookmark is later deleted, the reference still renders fully.
@@ -1167,7 +1187,10 @@ impl ContentModel {
         use std::collections::BTreeMap;
         let mut portals_by_line: BTreeMap<u32, Vec<&LoadedPortal>> = BTreeMap::new();
         for portal in &loaded_portals {
-            portals_by_line.entry(portal.insert_at).or_default().push(portal);
+            portals_by_line
+                .entry(portal.insert_at)
+                .or_default()
+                .push(portal);
         }
 
         // Interleave in reverse order (highest insert_at first) to preserve indices
@@ -1277,7 +1300,9 @@ impl AppState {
 
     /// Delete an annotation by range.
     pub fn delete_annotation(&mut self, start_line: u32, end_line: u32) {
-        self.session.annotations.remove(&LineRange::new(start_line, end_line));
+        self.session
+            .annotations
+            .remove(&LineRange::new(start_line, end_line));
     }
 }
 
@@ -1320,9 +1345,18 @@ mod tests {
         let state = test_state("a\nb\nc", "test.rs");
         let response = state.to_response();
 
-        assert!(matches!(response.lines[0].origin, LineOrigin::Source { line: 1, .. }));
-        assert!(matches!(response.lines[1].origin, LineOrigin::Source { line: 2, .. }));
-        assert!(matches!(response.lines[2].origin, LineOrigin::Source { line: 3, .. }));
+        assert!(matches!(
+            response.lines[0].origin,
+            LineOrigin::Source { line: 1, .. }
+        ));
+        assert!(matches!(
+            response.lines[1].origin,
+            LineOrigin::Source { line: 2, .. }
+        ));
+        assert!(matches!(
+            response.lines[2].origin,
+            LineOrigin::Source { line: 3, .. }
+        ));
     }
 
     #[test]
@@ -1440,8 +1474,16 @@ mod tests {
         assert!(state.content.lines[0].content.starts_with("diff --git"));
 
         // Check that +/- lines are preserved
-        let has_added = state.content.lines.iter().any(|l| l.content.starts_with('+'));
-        let has_deleted = state.content.lines.iter().any(|l| l.content.starts_with('-'));
+        let has_added = state
+            .content
+            .lines
+            .iter()
+            .any(|l| l.content.starts_with('+'));
+        let has_deleted = state
+            .content
+            .lines
+            .iter()
+            .any(|l| l.content.starts_with('-'));
         assert!(has_added, "Should have added lines");
         assert!(has_deleted, "Should have deleted lines");
     }
@@ -1452,8 +1494,14 @@ mod tests {
 
         // Diff lines have LineOrigin::Diff with old_line/new_line info
         // Just verify lines exist and have Diff origin
-        assert!(matches!(state.content.lines[0].origin, LineOrigin::Diff { .. }));
-        assert!(matches!(state.content.lines[1].origin, LineOrigin::Diff { .. }));
+        assert!(matches!(
+            state.content.lines[0].origin,
+            LineOrigin::Diff { .. }
+        ));
+        assert!(matches!(
+            state.content.lines[1].origin,
+            LineOrigin::Diff { .. }
+        ));
     }
 
     #[test]
@@ -1466,7 +1514,8 @@ mod tests {
 
     #[test]
     fn from_diff_error_on_invalid_content() {
-        let result = ContentModel::from_diff("just regular text", test_diff_source("not-a-diff.txt"));
+        let result =
+            ContentModel::from_diff("just regular text", test_diff_source("not-a-diff.txt"));
         assert!(result.is_err());
     }
 
@@ -1485,7 +1534,12 @@ mod tests {
         let content_model = ContentModel::from_diff(SIMPLE_DIFF, source).unwrap();
         let config = UserConfig::with_data(
             vec![Tag::new("TEST".into(), "instruction".into())],
-            vec![ExitMode::new("Apply".into(), "#22c55e".into(), "Apply it".into(), 0)],
+            vec![ExitMode::new(
+                "Apply".into(),
+                "#22c55e".into(),
+                "Apply it".into(),
+                0,
+            )],
         );
         let state = AppState::new(content_model, config);
 
@@ -1529,18 +1583,34 @@ mod tests {
         println!("=== END ===\n");
 
         // Find the deleted doc comment line
-        let deleted_line = state.content.lines.iter().find(|l| l.content.starts_with("-///")).unwrap();
-        assert!(deleted_line.html.is_some(), "Deleted doc comment should have HTML");
+        let deleted_line = state
+            .content
+            .lines
+            .iter()
+            .find(|l| l.content.starts_with("-///"))
+            .unwrap();
+        assert!(
+            deleted_line.html.is_some(),
+            "Deleted doc comment should have HTML"
+        );
         let html = match deleted_line.html.as_ref().unwrap() {
             LineHtml::Full(s) => s.as_str(),
             LineHtml::Cells(_) => panic!("Expected Full HTML, got Cells"),
         };
 
         // HTML should not contain newlines
-        assert!(!html.contains('\n'), "HTML should not contain newline. Got: {:?}", html);
+        assert!(
+            !html.contains('\n'),
+            "HTML should not contain newline. Got: {:?}",
+            html
+        );
 
         // HTML should start with the prefix
-        assert!(html.starts_with('-'), "HTML should start with '-' prefix. Got: {:?}", html);
+        assert!(
+            html.starts_with('-'),
+            "HTML should start with '-' prefix. Got: {:?}",
+            html
+        );
     }
 
     #[test]

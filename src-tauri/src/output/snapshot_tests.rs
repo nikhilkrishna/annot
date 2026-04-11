@@ -16,9 +16,9 @@ use tempfile::NamedTempFile;
 use crate::input::{CliSource, ContentSource, DiffSource, McpSource};
 use crate::review::Review;
 use crate::state::{
-    AnnotationRefSnapshot, Annotation, Bookmark, BookmarkSnapshot, ContentMetadata,
-    ContentModel, ContentNode, ExitMode, ExitModeSource, Line, LineOrigin, LineRange,
-    LineSemantics, RefSnapshot, SessionType, UserConfig,
+    Annotation, AnnotationRefSnapshot, Bookmark, BookmarkSnapshot, ContentMetadata, ContentModel,
+    ContentNode, ExitMode, ExitModeSource, Line, LineOrigin, LineRange, LineSemantics, RefSnapshot,
+    SessionType, UserConfig,
 };
 
 use super::{format_output, OutputMode};
@@ -43,7 +43,11 @@ fn make_lines(path: &str, start: u32, end: u32) -> Vec<Line> {
         .collect()
 }
 
-fn make_review(label: &str, lines: Vec<Line>, annotations: HashMap<LineRange, Annotation>) -> Review {
+fn make_review(
+    label: &str,
+    lines: Vec<Line>,
+    annotations: HashMap<LineRange, Annotation>,
+) -> Review {
     let source = ContentSource::Cli(CliSource::File {
         path: PathBuf::from(label),
     });
@@ -143,7 +147,8 @@ fn annotation_multiline_content() {
             start_line: 5,
             end_line: 5,
             content: vec![ContentNode::Text {
-                text: "First line of feedback\nSecond line continues\nThird line concludes".to_string(),
+                text: "First line of feedback\nSecond line continues\nThird line concludes"
+                    .to_string(),
             }],
         },
     );
@@ -263,7 +268,8 @@ fn general_comment_only() {
 fn general_comment_multiline() {
     let mut review = make_review("test.rs", vec![], HashMap::new());
     review.session_comment = Some(vec![ContentNode::Text {
-        text: "First paragraph of feedback.\n\nSecond paragraph with more details.\n\nConclusion.".to_string(),
+        text: "First paragraph of feedback.\n\nSecond paragraph with more details.\n\nConclusion."
+            .to_string(),
     }]);
 
     let output = format_output(&review, OutputMode::Cli).text;
@@ -387,7 +393,12 @@ fn tags_general_next_annotations() {
         },
     );
 
-    let mut review = make_review_with_config("handler.rs", make_lines("handler.rs", 1, 20), annotations, config);
+    let mut review = make_review_with_config(
+        "handler.rs",
+        make_lines("handler.rs", 1, 20),
+        annotations,
+        config,
+    );
     review.session_comment = Some(vec![ContentNode::Text {
         text: "Good progress, but security and performance need attention".to_string(),
     }]);
@@ -850,7 +861,9 @@ fn kitchen_sink_everything() {
     ]);
 
     // Mark new_bookmark as created this session
-    review.session_created_bookmarks.insert("newbookmark2".to_string());
+    review
+        .session_created_bookmarks
+        .insert("newbookmark2".to_string());
 
     // Set exit mode
     review.selected_exit_mode_id = Some("apply-with-changes".to_string());
@@ -1415,8 +1428,14 @@ fn json_output_text_only() {
 
     // Text should contain the annotation
     let text = parsed["text"].as_str().unwrap();
-    assert!(text.contains("Fix this"), "JSON text should contain annotation");
-    assert!(text.contains("handler.rs:5"), "JSON text should contain file location");
+    assert!(
+        text.contains("Fix this"),
+        "JSON text should contain annotation"
+    );
+    assert!(
+        text.contains("handler.rs:5"),
+        "JSON text should contain file location"
+    );
 
     // No images
     assert_eq!(parsed["images"].as_array().unwrap().len(), 0);
@@ -1550,4 +1569,3 @@ fn json_output_mcp_mode_collects_media_as_images() {
     assert!(parsed["text"].as_str().unwrap().contains("[Figure 1]"));
     assert_eq!(parsed["images"].as_array().unwrap().len(), 1);
 }
-

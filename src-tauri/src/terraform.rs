@@ -144,7 +144,8 @@ impl TerraformIntent {
             // Dissolve — only direction applies
             TerraformIntent::Dissolve { direction } => {
                 let mut clauses = vec![
-                    "Dissolve this as a unit, integrating its essence into surroundings.".to_string()
+                    "Dissolve this as a unit, integrating its essence into surroundings."
+                        .to_string(),
                 ];
                 if let Some(dir) = direction {
                     clauses.push(format!("{}.", dir.to_prose_clause()));
@@ -482,7 +483,10 @@ mod tests {
             None,
             Some(DirectionDirective::Reframe),
         ));
-        assert_eq!(r.to_prose(), "Same content, reframed from a different angle.");
+        assert_eq!(
+            r.to_prose(),
+            "Same content, reframed from a different angle."
+        );
     }
 
     // ========== Transform: Combined ==========

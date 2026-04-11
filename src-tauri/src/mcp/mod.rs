@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolResult, Content, ServerInfo, ServerCapabilities};
+use rmcp::model::{CallToolResult, Content, ServerCapabilities, ServerInfo};
 use rmcp::{tool, tool_handler, tool_router, ErrorData as McpError, ServerHandler, ServiceExt};
 use tauri::{AppHandle, Manager, WebviewWindowBuilder};
 
@@ -71,7 +71,9 @@ impl AnnotServer {
         Self { app_handle }
     }
 
-    #[tool(description = "Opens a file for human review and annotation. Blocks until the window closes. The user can select line ranges to annotate, apply semantic tags (like [# SECURITY], [# TODO]), and add freeform comments. Returns line-anchored annotations with tags for systematic processing.")]
+    #[tool(
+        description = "Opens a file for human review and annotation. Blocks until the window closes. The user can select line ranges to annotate, apply semantic tags (like [# SECURITY], [# TODO]), and add freeform comments. Returns line-anchored annotations with tags for systematic processing."
+    )]
     async fn review_file(
         &self,
         params: Parameters<ReviewFileInput>,
@@ -79,17 +81,17 @@ impl AnnotServer {
         let app_handle = self.app_handle.clone();
         let input = params.0;
 
-        let output = tokio::task::spawn_blocking(move || {
-            run_file_session(&app_handle, input)
-        })
-        .await
-        .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
-        .map_err(|e| McpError::internal_error(e, None))?;
+        let output = tokio::task::spawn_blocking(move || run_file_session(&app_handle, input))
+            .await
+            .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+            .map_err(|e| McpError::internal_error(e, None))?;
 
         Ok(build_mcp_response(output))
     }
 
-    #[tool(description = "Opens agent-generated content (plans, drafts, analysis) for human review. Blocks until the window closes. Best for content you've generated that needs human steering before proceeding. Supports portal links to embed live code (`[label](path#L1-L20)`), highlights (`==important==`), and Mermaid diagrams. Returns line-anchored annotations for iterative refinement.")]
+    #[tool(
+        description = "Opens agent-generated content (plans, drafts, analysis) for human review. Blocks until the window closes. Best for content you've generated that needs human steering before proceeding. Supports portal links to embed live code (`[label](path#L1-L20)`), highlights (`==important==`), and Mermaid diagrams. Returns line-anchored annotations for iterative refinement."
+    )]
     async fn review_content(
         &self,
         params: Parameters<ReviewContentInput>,
@@ -97,17 +99,17 @@ impl AnnotServer {
         let app_handle = self.app_handle.clone();
         let input = params.0;
 
-        let output = tokio::task::spawn_blocking(move || {
-            run_content_session(&app_handle, input)
-        })
-        .await
-        .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
-        .map_err(|e| McpError::internal_error(e, None))?;
+        let output = tokio::task::spawn_blocking(move || run_content_session(&app_handle, input))
+            .await
+            .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+            .map_err(|e| McpError::internal_error(e, None))?;
 
         Ok(build_mcp_response(output))
     }
 
-    #[tool(description = "Opens a diff for human review. Blocks until the window closes. Supports git_diff_args (e.g. [\"--staged\"], [\"main...HEAD\"]) or raw diff_content. Returns annotations anchored to diff lines for targeted feedback on changes.")]
+    #[tool(
+        description = "Opens a diff for human review. Blocks until the window closes. Supports git_diff_args (e.g. [\"--staged\"], [\"main...HEAD\"]) or raw diff_content. Returns annotations anchored to diff lines for targeted feedback on changes."
+    )]
     async fn review_diff(
         &self,
         params: Parameters<ReviewDiffInput>,
@@ -115,17 +117,17 @@ impl AnnotServer {
         let app_handle = self.app_handle.clone();
         let input = params.0;
 
-        let output = tokio::task::spawn_blocking(move || {
-            run_diff_session(&app_handle, input)
-        })
-        .await
-        .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
-        .map_err(|e| McpError::internal_error(e, None))?;
+        let output = tokio::task::spawn_blocking(move || run_diff_session(&app_handle, input))
+            .await
+            .map_err(|e| McpError::internal_error(format!("Task join error: {}", e), None))?
+            .map_err(|e| McpError::internal_error(e, None))?;
 
         Ok(build_mcp_response(output))
     }
 
-    #[tool(description = "Retrieves a single bookmark by ID or ID prefix. Returns the full bookmark including its snapshot content. If the prefix matches multiple bookmarks, returns an error with candidates.")]
+    #[tool(
+        description = "Retrieves a single bookmark by ID or ID prefix. Returns the full bookmark including its snapshot content. If the prefix matches multiple bookmarks, returns an error with candidates."
+    )]
     async fn get_bookmark(
         &self,
         params: Parameters<GetBookmarkInput>,
@@ -171,7 +173,9 @@ impl AnnotServer {
         }
     }
 
-    #[tool(description = "List all bookmarks, optionally filtered by search query, project path, or limited to a maximum count. Returns a summary list with IDs, labels, creation dates, sources, and projects. Sorted by creation date ascending (oldest first) by default; use sort=\"desc\" for newest first.")]
+    #[tool(
+        description = "List all bookmarks, optionally filtered by search query, project path, or limited to a maximum count. Returns a summary list with IDs, labels, creation dates, sources, and projects. Sorted by creation date ascending (oldest first) by default; use sort=\"desc\" for newest first."
+    )]
     async fn list_bookmarks(
         &self,
         params: Parameters<ListBookmarksInput>,
@@ -201,7 +205,8 @@ impl AnnotServer {
                     if let Some(ref query) = input.search {
                         let query_lower = query.to_lowercase();
                         let label_match = b.display_label().to_lowercase().contains(&query_lower);
-                        let content_match = b.snapshot.content().to_lowercase().contains(&query_lower);
+                        let content_match =
+                            b.snapshot.content().to_lowercase().contains(&query_lower);
                         if !label_match && !content_match {
                             return false;
                         }
@@ -248,7 +253,10 @@ impl ServerHandler for AnnotServer {
 }
 
 /// Run a file review session.
-fn run_file_session(app_handle: &AppHandle, params: ReviewFileInput) -> Result<SessionOutput, String> {
+fn run_file_session(
+    app_handle: &AppHandle,
+    params: ReviewFileInput,
+) -> Result<SessionOutput, String> {
     // Read file content
     let path = Path::new(&params.file_path);
     let content = fs::read_to_string(path)
@@ -270,7 +278,12 @@ fn run_content_session(
         label: params.label,
     });
 
-    run_session(app_handle, params.content, params.exit_modes, content_source)
+    run_session(
+        app_handle,
+        params.content,
+        params.exit_modes,
+        content_source,
+    )
 }
 
 /// Run a diff review session.
@@ -281,39 +294,40 @@ fn run_diff_session(
     use std::process::Command;
 
     // Get diff content and derive label + source based on which input was provided
-    let (diff_text, derived_label, diff_source) = match (&params.git_diff_args, &params.diff_content) {
-        (Some(args), None) => {
-            // Git diff mode
-            let output = Command::new("git")
-                .arg("diff")
-                .args(args)
-                .output()
-                .map_err(|e| format!("Failed to run git: {}", e))?;
+    let (diff_text, derived_label, diff_source) =
+        match (&params.git_diff_args, &params.diff_content) {
+            (Some(args), None) => {
+                // Git diff mode
+                let output = Command::new("git")
+                    .arg("diff")
+                    .args(args)
+                    .output()
+                    .map_err(|e| format!("Failed to run git: {}", e))?;
 
-            if !output.status.success() {
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                return Err(format!("git diff failed: {}", stderr));
+                if !output.status.success() {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    return Err(format!("git diff failed: {}", stderr));
+                }
+
+                let diff = String::from_utf8_lossy(&output.stdout).to_string();
+                let label = args
+                    .first()
+                    .map(|s| s.trim_start_matches('-').to_string())
+                    .unwrap_or_else(|| "diff".to_string());
+                let source = DiffSource::Git { args: args.clone() };
+                (diff, label, source)
             }
-
-            let diff = String::from_utf8_lossy(&output.stdout).to_string();
-            let label = args
-                .first()
-                .map(|s| s.trim_start_matches('-').to_string())
-                .unwrap_or_else(|| "diff".to_string());
-            let source = DiffSource::Git { args: args.clone() };
-            (diff, label, source)
-        }
-        (None, Some(content)) => {
-            // Raw diff mode
-            (content.clone(), "diff".to_string(), DiffSource::Raw)
-        }
-        (Some(_), Some(_)) => {
-            return Err("Provide either git_diff_args or diff_content, not both".to_string());
-        }
-        (None, None) => {
-            return Err("Provide either git_diff_args or diff_content".to_string());
-        }
-    };
+            (None, Some(content)) => {
+                // Raw diff mode
+                (content.clone(), "diff".to_string(), DiffSource::Raw)
+            }
+            (Some(_), Some(_)) => {
+                return Err("Provide either git_diff_args or diff_content, not both".to_string());
+            }
+            (None, None) => {
+                return Err("Provide either git_diff_args or diff_content".to_string());
+            }
+        };
 
     let label = params.label.clone().unwrap_or(derived_label);
     let content_source = ContentSource::Mcp(McpSource::Diff {
@@ -411,16 +425,23 @@ fn run_session_with_state(
         *slot.lock() = Some(review);
     }
 
-    let mut builder = WebviewWindowBuilder::new(app_handle, &window_label, tauri::WebviewUrl::App("index.html".into()))
-        .title("annot")
-        .inner_size(1000.0, 700.0)
-        .visible(false) // Will be shown after content loads
-        .title_bar_style(tauri::TitleBarStyle::Overlay)
-        .hidden_title(true);
+    // mut only needed on macOS for title bar customization
+    #[allow(unused_mut)]
+    let mut builder = WebviewWindowBuilder::new(
+        app_handle,
+        &window_label,
+        tauri::WebviewUrl::App("index.html".into()),
+    )
+    .title("annot")
+    .inner_size(1000.0, 700.0)
+    .visible(false); // Will be shown after content loads
 
     #[cfg(target_os = "macos")]
     {
-        builder = builder.traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
+        builder = builder
+            .title_bar_style(tauri::TitleBarStyle::Overlay)
+            .hidden_title(true)
+            .traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
     }
 
     let _window = builder
@@ -428,7 +449,9 @@ fn run_session_with_state(
         .map_err(|e| format!("Failed to create window: {}", e))?;
 
     // Block until result received
-    let result = rx.recv().map_err(|e| format!("Failed to receive result: {}", e))?;
+    let result = rx
+        .recv()
+        .map_err(|e| format!("Failed to receive result: {}", e))?;
 
     // Hide dock icon after window closes
     #[cfg(target_os = "macos")]
@@ -439,11 +462,15 @@ fn run_session_with_state(
 
     Ok(SessionOutput {
         text: result.text,
-        images: result.images.into_iter().map(|img| SessionImage {
-            figure: img.figure,
-            data: img.data,
-            mime_type: img.mime_type,
-        }).collect(),
+        images: result
+            .images
+            .into_iter()
+            .map(|img| SessionImage {
+                figure: img.figure,
+                data: img.data,
+                mime_type: img.mime_type,
+            })
+            .collect(),
     })
 }
 
@@ -473,9 +500,16 @@ fn format_bookmark_full(bookmark: &crate::state::Bookmark) -> String {
     let mut lines = vec![
         format!("Bookmark: {}", bookmark.id),
         format!("Label: {}", bookmark.display_label()),
-        format!("Source: {} ({})", bookmark.snapshot.source_title(), source_type),
+        format!(
+            "Source: {} ({})",
+            bookmark.snapshot.source_title(),
+            source_type
+        ),
         format!("Project: {}", project),
-        format!("Created: {}", bookmark.created_at.format("%Y-%m-%d %H:%M:%S UTC")),
+        format!(
+            "Created: {}",
+            bookmark.created_at.format("%Y-%m-%d %H:%M:%S UTC")
+        ),
         String::new(),
     ];
 

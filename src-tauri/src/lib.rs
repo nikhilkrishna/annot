@@ -30,9 +30,9 @@ use commands::{
     create_selection_bookmark, cycle_exit_mode, delete_annotation, delete_bookmark,
     delete_exit_mode, delete_tag, delete_terraform, export_to_obsidian, finish_review,
     get_bookmarks, get_config, get_content, get_exit_modes, get_tags, get_terraform_phrase,
-    get_terraform_regions, get_theme, reload_config, reorder_exit_modes, save_config,
-    save_content, set_exit_mode, set_session_comment, set_theme, update_bookmark,
-    upsert_annotation, upsert_exit_mode, upsert_tag, upsert_terraform,
+    get_terraform_regions, get_theme, reload_config, reorder_exit_modes, save_config, save_content,
+    set_exit_mode, set_session_comment, set_theme, update_bookmark, upsert_annotation,
+    upsert_exit_mode, upsert_tag, upsert_terraform,
 };
 use excalidraw_window::{
     close_excalidraw_by_placeholder, excalidraw_cancel, excalidraw_save, get_excalidraw_context,
@@ -131,20 +131,20 @@ pub fn run(state: AppState, context: tauri::Context, json_output: bool) {
         .invoke_handler(all_commands!())
         .setup(|app| {
             // Create window programmatically (not from config, for MCP compatibility)
-            let mut builder = WebviewWindowBuilder::new(
-                app,
-                "main",
-                tauri::WebviewUrl::App("index.html".into()),
-            )
-            .title("annot")
-            .inner_size(1000.0, 700.0)
-            .visible(false) // Will be shown after content loads
-            .title_bar_style(tauri::TitleBarStyle::Overlay)
-            .hidden_title(true);
+            // mut only needed on macOS for title bar customization
+            #[allow(unused_mut)]
+            let mut builder =
+                WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
+                    .title("annot")
+                    .inner_size(1000.0, 700.0)
+                    .visible(false); // Will be shown after content loads
 
             #[cfg(target_os = "macos")]
             {
-                builder = builder.traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
+                builder = builder
+                    .title_bar_style(tauri::TitleBarStyle::Overlay)
+                    .hidden_title(true)
+                    .traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
             }
 
             let window = builder.build()?;
@@ -156,13 +156,20 @@ pub fn run(state: AppState, context: tauri::Context, json_output: bool) {
             let window_for_save = window.clone();
             window.on_window_event(move |event| {
                 if let tauri::WindowEvent::CloseRequested { .. } = event {
-                    let _ =
-                        window_state::save_window_state(&window_for_save, window_state::WindowType::Main);
+                    let _ = window_state::save_window_state(
+                        &window_for_save,
+                        window_state::WindowType::Main,
+                    );
                 }
             });
 
             #[cfg(debug_assertions)]
-            window.open_devtools();
+            if matches!(
+                std::env::var("ANNOT_OPEN_DEVTOOLS").ok().as_deref(),
+                Some("1") | Some("true") | Some("TRUE") | Some("yes") | Some("YES")
+            ) {
+                window.open_devtools();
+            }
 
             Ok(())
         })
