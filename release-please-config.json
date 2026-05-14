@@ -7,7 +7,11 @@
         "package.json",
         "src-tauri/tauri.conf.json",
         "src-tauri/Cargo.toml",
-        { "type": "cargo-lock", "path": "src-tauri/Cargo.lock" }
+        {
+          "type": "toml",
+          "path": "src-tauri/Cargo.lock",
+          "jsonpath": "$.package[?(@.name=='annot')].version"
+        }
       ],
       "bump-minor-pre-major": true
     }
