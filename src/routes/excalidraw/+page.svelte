@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { keys } from '$lib/keys';
   import { invoke } from '@tauri-apps/api/core';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import type { ExcalidrawHandle } from '$lib/excalidraw-loader';
@@ -248,7 +249,7 @@
     <div class="status-bar-left"></div>
     <div class="status-bar-right">
       <span class="kbd-hint"><kbd>Esc</kbd> dismiss</span>
-      <span class="kbd-hint"><kbd>⌘W</kbd> save and close</span>
+      <span class="kbd-hint"><kbd>{keys.cmd}+W</kbd> save and close</span>
     </div>
   </footer>
 </div>

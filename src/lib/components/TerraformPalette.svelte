@@ -1,5 +1,6 @@
 <script lang="ts">
   import { useTerraform, FORM_LABELS } from '$lib/composables/useTerraform.svelte';
+  import { keys } from '$lib/keys';
   import type { TerraformRegion, FormType } from '$lib/types';
   import { FORM_TYPES, INTENSITY_LEVELS, emptyTransformIntent } from '$lib/types';
   import DiscreteSlider from './DiscreteSlider.svelte';
@@ -528,9 +529,9 @@
   {/if}
 
   <div class="terraform-hints">
-    <span class="terraform-hint"><kbd>⌘↵</kbd> save</span>
+    <span class="terraform-hint"><kbd>{keys.cmd}+↵</kbd> save</span>
     {#if initialRegion}
-      <span class="terraform-hint"><kbd>⌘D</kbd> delete</span>
+      <span class="terraform-hint"><kbd>{keys.cmd}+D</kbd> delete</span>
     {/if}
     <span class="terraform-hint"><kbd>esc</kbd> cancel</span>
   </div>

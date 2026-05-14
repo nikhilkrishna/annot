@@ -4,6 +4,8 @@ import { svelteTesting } from "@testing-library/svelte/vite";
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
+// @ts-expect-error process is a nodejs global
+const isMacos = process.platform === 'darwin';
 
 // Custom logger to filter out Svelte 5 @__PURE__ annotation warnings
 const logger = createLogger();
@@ -20,6 +22,9 @@ logger.warn = (msg, options) => {
 export default defineConfig(async () => ({
   customLogger: logger,
   plugins: [sveltekit(), svelteTesting()],
+  define: {
+    __IS_MACOS__: JSON.stringify(isMacos),
+  },
 
   test: {
     environment: "jsdom",

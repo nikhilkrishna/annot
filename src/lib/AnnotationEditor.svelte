@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { keys } from '$lib/keys';
   import type { JSONContent } from '@tiptap/core';
   import { invoke } from '@tauri-apps/api/core';
   import { listen, type UnlistenFn } from '@tauri-apps/api/event';
@@ -505,7 +506,7 @@
       <span class="kbd-hint"><kbd>#</kbd> tags</span>
       <span class="kbd-hint"><kbd>@</kbd> refs</span>
       <span class="kbd-hint"><kbd>/</kbd> commands</span>
-      <span class="kbd-hint"><kbd>⌘↵</kbd> done</span>
+      <span class="kbd-hint"><kbd>{keys.cmd}+↵</kbd> done</span>
       <span class="kbd-hint"><kbd>Esc</kbd> cancel</span>
     </div>
   {/if}
