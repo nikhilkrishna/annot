@@ -1,3 +1,5 @@
+declare const __IS_MACOS__: boolean;
+
 /** Context for creating a selection bookmark (start === end for single line). */
 export type BookmarkContext = { start: number; end: number };
 
@@ -153,8 +155,8 @@ export function useKeyboard(handlers: KeyboardHandlers, state: KeyboardState) {
       return;
     }
 
-    // Cmd+W / Ctrl+W to close window (on macOS this is handled natively; on Linux it must be explicit)
-    if (e.key === 'w' && (e.metaKey || e.ctrlKey)) {
+    // Ctrl+W to close window — non-macOS only (macOS closes windows natively)
+    if (!__IS_MACOS__ && e.key === 'w' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       handlers.onCloseWindow?.();
       return;
