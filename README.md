@@ -2,7 +2,7 @@
 
 An annotation tool for human-in-the-loop AI workflows.
 
-> **Platform**: macOS only (Apple Silicon). Not tested on Linux or Windows.
+> **Platform**: macOS (Apple Silicon) and Linux (NixOS/Wayland tested). Not tested on Windows.
 
 ![annot screenshot](docs/screenshot.png)
 
@@ -14,12 +14,14 @@ annot is that moment of review. It opens a window, you shape the content with lo
 
 ## Install
 
+**macOS:**
+
 ```bash
 brew install denolehov/tap/annot
 ```
 
 <details>
-<summary>Build from source</summary>
+<summary>Build from source (macOS)</summary>
 
 ```bash
 git clone https://github.com/denolehov/annot.git && cd annot
@@ -29,11 +31,33 @@ pnpm tauri build
 
 </details>
 
+<details>
+<summary>Build from source (NixOS / Linux)</summary>
+
+```bash
+git clone https://github.com/denolehov/annot.git && cd annot
+nix develop          # enter dev shell with all build dependencies
+pnpm install
+pnpm tauri build     # binary at src-tauri/target/release/annot
+```
+
+Or install into your Nix profile (wraps the binary with required env vars):
+
+```bash
+nix profile install path:.
+```
+
+> **Wayland note**: The installed binary automatically sets `GDK_BACKEND=x11` and
+> `WEBKIT_DISABLE_DMABUF_RENDERER=1` via the Nix wrapper, which prevents broken
+> text rendering in WebKit2GTK under Wayland.
+
+</details>
+
 ## Quick start
 
 ### With Claude Code
 
-Add to your MCP settings (`~/.claude/settings.json` or project `.claude/settings.json`):
+**macOS** — add to your MCP settings (`~/.claude/settings.json` or project `.claude/settings.json`):
 
 ```json
 {
@@ -44,6 +68,12 @@ Add to your MCP settings (`~/.claude/settings.json` or project `.claude/settings
     }
   }
 }
+```
+
+**Linux** — use the CLI instead:
+
+```bash
+claude mcp add --scope user annot annot mcp
 ```
 
 Claude now has review tools (`review_file`, `review_diff`, `review_content`) and bookmark tools (`get_bookmark`, `list_bookmarks`). Ask it to review something and a window opens for your feedback.
@@ -163,8 +193,8 @@ Press `Shift+C` to add comments that apply to the entire review — framing cont
 | Tab / Shift+Tab | Cycle exit modes |
 | Alt+Tab | Exit mode picker |
 | : | Command palette |
-| Cmd+F | Search |
-| Cmd+S | Save to file |
+| Cmd+F / Ctrl+F | Search |
+| Cmd+S / Ctrl+S | Save to file |
 | ? | Help overlay |
 
 **In annotation editor:**
