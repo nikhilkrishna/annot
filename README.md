@@ -32,7 +32,40 @@ pnpm tauri build
 </details>
 
 <details>
-<summary>Build from source (NixOS / Linux)</summary>
+<summary>Build from source (Ubuntu)</summary>
+
+Install system dependencies:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  libwebkit2gtk-4.1-dev \
+  build-essential \
+  file \
+  libxdo-dev \
+  libssl-dev \
+  libayatana-appindicator3-dev \
+  librsvg2-dev \
+  libgstreamer1.0-dev \
+  libgstreamer-plugins-base1.0-dev \
+  gstreamer1.0-plugins-good \
+  gstreamer1.0-plugins-bad \
+  libgstreamer-plugins-bad1.0-dev
+```
+
+Install Rust, Node.js 22, and pnpm, then build:
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+git clone https://github.com/denolehov/annot.git && cd annot
+pnpm install
+pnpm tauri build     # binary at src-tauri/target/release/annot
+```
+
+</details>
+
+<details>
+<summary>Build from source (NixOS)</summary>
 
 ```bash
 git clone https://github.com/denolehov/annot.git && cd annot
