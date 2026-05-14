@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy, tick } from 'svelte';
 	import { invoke } from '@tauri-apps/api/core';
-	import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
+	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { renderMermaid } from '$lib/mermaid-loader';
 	import { initTheme, type EffectiveTheme } from '$lib/theme';
 	import panzoom from 'panzoom';
@@ -94,8 +94,9 @@
 		const finalWidth = Math.min(windowWidth, maxWidth);
 		const finalHeight = Math.min(windowHeight, maxHeight);
 
-		await win.setSize(new LogicalSize(finalWidth, finalHeight));
-		await win.center();
+		// Backend sizes the window to the diagram and centers it on the monitor
+		// where mermaid windows were last placed (falls back to the primary).
+		await invoke('position_mermaid_window', { width: finalWidth, height: finalHeight });
 
 		// Initialize panzoom at 1:1
 		panzoomInstance = panzoom(svgEl, {

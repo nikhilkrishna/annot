@@ -16,10 +16,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, WebviewWindow};
-
-#[cfg(target_os = "macos")]
-use tauri::{LogicalPosition, LogicalSize};
+use tauri::{AppHandle, LogicalPosition, LogicalSize, Manager, Monitor, WebviewWindow};
 
 #[cfg(not(target_os = "macos"))]
 use tauri::{PhysicalPosition, PhysicalSize};
@@ -251,6 +248,76 @@ fn is_position_on_monitor(app: &AppHandle, x: i32, y: i32) -> bool {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// CONTENT-SIZED WINDOW PLACEMENT
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Size a content-sized window (e.g. a mermaid diagram viewer) to the given
+/// logical size and center it on the monitor where this window type was last
+/// seen — or the primary monitor if there's no usable memory.
+///
+/// Unlike [`restore_window_state`], this never restores an exact position:
+/// content-sized windows always fit their content and re-center; only the
+/// *monitor* is remembered (derived from the last-saved position).
+pub fn place_content_window(
+    window: &WebviewWindow,
+    window_type: WindowType,
+    width: f64,
+    height: f64,
+) -> Result<(), String> {
+    let app = window.app_handle();
+
+    window
+        .set_size(LogicalSize::new(width, height))
+        .map_err(|e| e.to_string())?;
+
+    let target = saved_monitor(app, window_type).or_else(|| app.primary_monitor().ok().flatten());
+
+    match target {
+        Some(monitor) => {
+            let scale = monitor.scale_factor();
+            let mpos = monitor.position();
+            let msize = monitor.size();
+            let (x, y) = center_in(
+                mpos.x as f64 / scale,
+                mpos.y as f64 / scale,
+                msize.width as f64 / scale,
+                msize.height as f64 / scale,
+                width,
+                height,
+            );
+            window
+                .set_position(LogicalPosition::new(x, y))
+                .map_err(|e| e.to_string())?;
+        }
+        None => {
+            let _ = window.center();
+        }
+    }
+
+    Ok(())
+}
+
+/// The monitor that contained this window type's last-saved position, if it is
+/// still connected.
+fn saved_monitor(app: &AppHandle, window_type: WindowType) -> Option<Monitor> {
+    let state = load_state(app, window_type)?;
+    let monitors = app.available_monitors().ok()?;
+    monitors.into_iter().find(|monitor| {
+        let pos = monitor.position();
+        let size = monitor.size();
+        let (left, top, right, bottom) =
+            monitor_compare_bounds(pos.x, pos.y, size.width, size.height, monitor.scale_factor());
+        point_in_rect(state.x, state.y, left, top, right, bottom)
+    })
+}
+
+/// Logical top-left position to center a `width` x `height` window within a
+/// monitor whose logical bounds start at `(mx, my)` and span `mw` x `mh`.
+fn center_in(mx: f64, my: f64, mw: f64, mh: f64, width: f64, height: f64) -> (f64, f64) {
+    (mx + (mw - width) / 2.0, my + (mh - height) / 2.0)
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // STATE FILE I/O
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -450,6 +517,17 @@ mod tests {
             .insert("main".into(), ws(2));
         assert_eq!(file.configs["cfg-A"]["main"].x, 1);
         assert_eq!(file.configs["cfg-B"]["main"].x, 2);
+    }
+
+    #[test]
+    fn center_in_centers() {
+        // 1000x700 window on a 1512x982 monitor at the origin.
+        assert_eq!(center_in(0.0, 0.0, 1512.0, 982.0, 1000.0, 700.0), (256.0, 141.0));
+        // Same window on a monitor offset to logical x=1512.
+        assert_eq!(
+            center_in(1512.0, 0.0, 2560.0, 1440.0, 1000.0, 700.0),
+            (2292.0, 370.0)
+        );
     }
 
     #[cfg(target_os = "macos")]

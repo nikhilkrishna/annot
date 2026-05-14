@@ -39,7 +39,9 @@ use excalidraw_window::{
     open_excalidraw_window, ExcalidrawWindowState,
 };
 use files::{invalidate_file_cache, list_project_files, FileCache, FileCacheState};
-use mermaid_window::{get_mermaid_source, open_mermaid_window, MermaidWindowState};
+use mermaid_window::{
+    get_mermaid_source, open_mermaid_window, position_mermaid_window, MermaidWindowState,
+};
 
 /// All IPC commands exposed to the frontend.
 macro_rules! all_commands {
@@ -74,6 +76,7 @@ macro_rules! all_commands {
             save_content,
             open_mermaid_window,
             get_mermaid_source,
+            position_mermaid_window,
             open_excalidraw_window,
             get_excalidraw_context,
             excalidraw_save,

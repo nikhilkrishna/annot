@@ -105,18 +105,38 @@ pub fn open_mermaid_window(
         .build()
         .map_err(|e| format!("Failed to create mermaid window: {}", e))?;
 
-    // Restore saved position/size (or keep defaults)
-    window_state::restore_window_state(&new_window, WindowType::Mermaid);
+    // Geometry is not restored here: a mermaid window is content-sized, so the
+    // frontend computes its size after rendering and calls
+    // `position_mermaid_window`, which sizes + centers it on the remembered
+    // monitor.
 
-    // Save window state on close
+    // Persist geometry so the *monitor* mermaid windows live on is remembered.
+    // Saved on move/resize too — CloseRequested does not fire when the app
+    // quits with the window still open.
     let window_for_save = new_window.clone();
     new_window.on_window_event(move |event| {
-        if let tauri::WindowEvent::CloseRequested { .. } = event {
+        if matches!(
+            event,
+            tauri::WindowEvent::CloseRequested { .. }
+                | tauri::WindowEvent::Moved(_)
+                | tauri::WindowEvent::Resized(_)
+        ) {
             let _ = window_state::save_window_state(&window_for_save, WindowType::Mermaid);
         }
     });
 
     Ok(label)
+}
+
+/// Size a mermaid window to fit its rendered diagram and center it on the
+/// monitor where mermaid windows were last placed (or the primary monitor).
+#[tauri::command]
+pub fn position_mermaid_window(
+    window: WebviewWindow,
+    width: f64,
+    height: f64,
+) -> Result<(), String> {
+    window_state::place_content_window(&window, WindowType::Mermaid, width, height)
 }
 
 /// Get mermaid source for a child window.
