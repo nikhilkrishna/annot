@@ -140,22 +140,23 @@ pub fn open_excalidraw_window(
     }
 
     // Create new window (hidden until frontend renders)
-    let mut builder = WebviewWindowBuilder::new(
-        &app,
-        &label,
-        tauri::WebviewUrl::App("excalidraw".into()),
-    )
-    .title("Excalidraw")
-    .inner_size(width, height)
-    .min_inner_size(600.0, 400.0)
-    .visible(false)
-    .title_bar_style(tauri::TitleBarStyle::Overlay)
-    .hidden_title(true);
-
-    #[cfg(target_os = "macos")]
-    {
-        builder = builder.traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
-    }
+    let builder = {
+        let b = WebviewWindowBuilder::new(
+            &app,
+            &label,
+            tauri::WebviewUrl::App("excalidraw".into()),
+        )
+        .title("Excalidraw")
+        .inner_size(width, height)
+        .min_inner_size(600.0, 400.0)
+        .visible(false);
+        #[cfg(target_os = "macos")]
+        let b = b
+            .title_bar_style(tauri::TitleBarStyle::Overlay)
+            .hidden_title(true)
+            .traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
+        b
+    };
 
     let new_window = builder
         .build()

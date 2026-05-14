@@ -134,21 +134,22 @@ pub fn run(state: AppState, context: tauri::Context, json_output: bool) {
         .invoke_handler(all_commands!())
         .setup(|app| {
             // Create window programmatically (not from config, for MCP compatibility)
-            let mut builder = WebviewWindowBuilder::new(
-                app,
-                "main",
-                tauri::WebviewUrl::App("index.html".into()),
-            )
-            .title("annot")
-            .inner_size(1000.0, 700.0)
-            .visible(false) // Will be shown after content loads
-            .title_bar_style(tauri::TitleBarStyle::Overlay)
-            .hidden_title(true);
-
-            #[cfg(target_os = "macos")]
-            {
-                builder = builder.traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
-            }
+            let builder = {
+                let b = WebviewWindowBuilder::new(
+                    app,
+                    "main",
+                    tauri::WebviewUrl::App("index.html".into()),
+                )
+                .title("annot")
+                .inner_size(1000.0, 700.0)
+                .visible(false); // Will be shown after content loads
+                #[cfg(target_os = "macos")]
+                let b = b
+                    .title_bar_style(tauri::TitleBarStyle::Overlay)
+                    .hidden_title(true)
+                    .traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
+                b
+            };
 
             let window = builder.build()?;
 

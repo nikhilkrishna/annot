@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, setContext } from 'svelte';
+  import { keys } from '$lib/keys';
   import { invoke } from '@tauri-apps/api/core';
   import { openUrl } from '@tauri-apps/plugin-opener';
   import { reduce, computeItemList } from './engine/reducer';
@@ -541,7 +542,7 @@
       }
       // Add Cmd-D delete hint if namespace allows deletion
       if (canDelete(machineState.namespace)) {
-        hints.push({ key: '⌘D', label: 'delete' });
+        hints.push({ key: `${keys.cmd}+D`, label: 'delete' });
       }
       hints.push({ key: '↵', label: 'select' });
       hints.push({ key: 'Esc', label: 'back' });
@@ -550,25 +551,25 @@
     if (machineState.type === 'ITEM_REORDER') {
       return [
         { key: '↑↓', label: 'nav' },
-        { key: '⌘⌥↑↓', label: 'move' },
+        { key: `${keys.cmd}+${keys.alt}+↑↓`, label: 'move' },
         { key: '↵', label: 'save' },
       ];
     }
     if (machineState.type === 'EDIT_FORM') {
-      const hints = [{ key: '⌘↵', label: 'save' }];
+      const hints = [{ key: `${keys.cmd}+↵`, label: 'save' }];
       // Only show Tab hint if there are multiple fields to navigate
       if (machineState.namespace.fields.length > 1) {
         hints.push({ key: 'Tab', label: 'next field' });
       }
       // Add Cmd-D delete hint if item can be deleted
       if (canDelete(machineState.namespace) && isItemEditable(machineState.item)) {
-        hints.push({ key: '⌘D', label: 'delete' });
+        hints.push({ key: `${keys.cmd}+D`, label: 'delete' });
       }
       hints.push({ key: 'Esc', label: 'cancel' });
       return hints;
     }
     if (machineState.type === 'CREATE_FORM') {
-      const hints = [{ key: '⌘↵', label: 'save' }];
+      const hints = [{ key: `${keys.cmd}+↵`, label: 'save' }];
       // Only show Tab hint if there are multiple fields to navigate
       if (machineState.namespace.fields.length > 1) {
         hints.push({ key: 'Tab', label: 'next field' });

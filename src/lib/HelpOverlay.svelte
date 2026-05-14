@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { keys } from '$lib/keys';
+
   interface Props {
     onClose: () => void;
   }
@@ -23,7 +25,7 @@
       category: 'Annotation',
       items: [
         { keys: ['c'], description: 'Comment hovered line' },
-        { keys: ['⇧', 'C'], description: 'Open session editor (global comment)' },
+        { keys: [keys.shift, 'C'], description: 'Open session editor (global comment)' },
       ]
     },
     {
@@ -38,7 +40,7 @@
       category: 'Bookmarks',
       items: [
         { keys: ['b'], description: 'Bookmark hovered line or selection' },
-        { keys: ['⇧', 'B'], description: 'Bookmark entire session' },
+        { keys: [keys.shift, 'B'], description: 'Bookmark entire session' },
         { keys: ['e'], description: 'Edit last created bookmark' },
       ]
     },
@@ -57,40 +59,40 @@
         { keys: ['<'], description: 'Lean in (direction)' },
         { keys: ['>'], description: 'Move away (direction)' },
         { keys: ['r'], description: 'Toggle reframe (direction)' },
-        { keys: ['⌘', '↵'], description: 'Save terraform' },
-        { keys: ['⌘', 'D'], description: 'Delete terraform' },
+        { keys: [keys.cmd, '↵'], description: 'Save terraform' },
+        { keys: [keys.cmd, 'D'], description: 'Delete terraform' },
       ]
     },
     {
       category: 'Navigation',
       items: [
-        { keys: ['⌘', 'F'], description: 'Search content' },
+        { keys: [keys.cmd, 'F'], description: 'Search content' },
         { keys: [':'], description: 'Open command palette' },
         { keys: ['Tab'], description: 'Cycle exit mode forward' },
-        { keys: ['⇧', 'Tab'], description: 'Cycle exit mode backward' },
-        { keys: ['⌥', 'Tab'], description: 'Open exit mode picker' },
+        { keys: [keys.shift, 'Tab'], description: 'Cycle exit mode backward' },
+        { keys: [keys.alt, 'Tab'], description: 'Open exit mode picker' },
       ]
     },
     {
       category: 'Selection',
       items: [
-        { keys: ['⇧', 'drag'], description: 'Select line range' },
+        { keys: [keys.shift, 'drag'], description: 'Select line range' },
         { keys: ['Esc'], description: 'Cancel pending choice' },
       ]
     },
     {
       category: 'View',
       items: [
-        { keys: ['⌘', '+'], description: 'Zoom in' },
-        { keys: ['⌘', '-'], description: 'Zoom out' },
-        { keys: ['⌘', '0'], description: 'Reset zoom' },
+        { keys: [keys.cmd, '+'], description: 'Zoom in' },
+        { keys: [keys.cmd, '-'], description: 'Zoom out' },
+        { keys: [keys.cmd, '0'], description: 'Reset zoom' },
       ]
     },
     {
       category: 'File',
       items: [
-        { keys: ['⌘', 'S'], description: 'Save to file' },
-        { keys: ['⌘', 'W'], description: 'Save and close' },
+        { keys: [keys.cmd, 'S'], description: 'Save to file' },
+        { keys: [keys.cmd, 'W'], description: 'Save and close' },
       ]
     },
   ];

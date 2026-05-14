@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getAnnotContext } from '$lib/context';
+  import { keys } from '$lib/keys';
 
   const ctx = getAnnotContext();
 
@@ -28,9 +29,9 @@
   </div>
   <div class="status-bar-right">
     <span class="kbd-hint"><kbd>:</kbd> command palette</span>
-    <span class="kbd-hint"><kbd>c</kbd> <kbd>⇧c</kbd> annotate</span>
-    <span class="kbd-hint"><kbd>b</kbd> <kbd>⇧b</kbd> bookmark</span>
+    <span class="kbd-hint"><kbd>c</kbd> <kbd>{keys.shift}+C</kbd> annotate</span>
+    <span class="kbd-hint"><kbd>b</kbd> <kbd>{keys.shift}+B</kbd> bookmark</span>
     <span class="kbd-hint"><kbd>?</kbd> help</span>
-    <span class="kbd-hint"><kbd>⌘w</kbd> save and close</span>
+    <span class="kbd-hint"><kbd>{keys.cmd}+W</kbd> save and close</span>
   </div>
 </footer>

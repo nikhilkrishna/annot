@@ -122,6 +122,7 @@ fn display_config_id(app: &AppHandle) -> Option<String> {
 pub fn save_window_state(window: &WebviewWindow, window_type: WindowType) -> Result<(), String> {
     let pos = window.outer_position().map_err(|e| e.to_string())?;
     let size = window.inner_size().map_err(|e| e.to_string())?;
+    #[cfg(target_os = "macos")]
     let scale = window.scale_factor().unwrap_or(1.0);
 
     // macOS uses logical coordinates for window positioning
