@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::path::PathBuf;
 
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use tempfile::NamedTempFile;
 
 use crate::input::{CliSource, ContentSource, DiffSource, McpSource};
@@ -633,6 +633,9 @@ fn context_line_whitespace_only() {
 /// - Saved to path
 #[test]
 fn kitchen_sink_everything() {
+    // Fixed timestamp so the rendered "Created:" date is deterministic.
+    let fixed_created_at: DateTime<Utc> = "2026-02-16T00:00:00Z".parse().unwrap();
+
     let config = UserConfig::with_data(
         vec![], // tags loaded from annotations
         vec![ExitMode {
@@ -649,7 +652,7 @@ fn kitchen_sink_everything() {
     let old_bookmark = Bookmark {
         id: "oldbookmark1".to_string(),
         label: Some("auth-validation".to_string()),
-        created_at: Utc::now(),
+        created_at: fixed_created_at,
         project_path: Some(PathBuf::from("/projects/myapp")),
         snapshot: BookmarkSnapshot::Selection {
             source_type: SessionType::File,
@@ -663,7 +666,7 @@ fn kitchen_sink_everything() {
     let new_bookmark = Bookmark {
         id: "newbookmark2".to_string(),
         label: Some("error-handler".to_string()),
-        created_at: Utc::now(),
+        created_at: fixed_created_at,
         project_path: None,
         snapshot: BookmarkSnapshot::Session {
             source_type: SessionType::Content,
