@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.9.0](https://github.com/denolehov/annot/compare/v0.8.0...v0.9.0) (2026-05-14)
+
+
+### Features
+
+* add support for Linux (nixos). ([4d5a96d](https://github.com/denolehov/annot/commit/4d5a96d123877173e5fec2edac0dcae2345443de))
+* **flake:** add packages.default for nix profile install ([6d8869f](https://github.com/denolehov/annot/commit/6d8869f11ca347d6bc81549e3f580db72cd81bcc))
+* platform-aware keyboard shortcut glyphs (⌘/Ctrl, ⌥/Alt, ⇧/Shift) ([83dc717](https://github.com/denolehov/annot/commit/83dc71785dd50592b8754fd03da07520fbdb5e36))
+
+
+### Bug Fixes
+
+* align sample.md session-comment key with Shift+C ([b109711](https://github.com/denolehov/annot/commit/b109711b701f642cbd5f8feaa4b193173fc0a9aa))
+* eliminate unused_mut warnings on Linux with platform-specific declarations ([6105357](https://github.com/denolehov/annot/commit/6105357b85f55f723abb1bc0b58845944c678fc3))
+* **flake:** add GStreamer deps and fix WebKit2GTK rendering on Wayland ([d042cfa](https://github.com/denolehov/annot/commit/d042cfa15bc9cbff978d05788698bf9132448c0b))
+* guard macOS-only Tauri APIs behind cfg(target_os = "macos") ([ced6f84](https://github.com/denolehov/annot/commit/ced6f849a4d7e7325bcc75f1ddf011eb8c590252))
+* keyboard shortcut fixes for Linux ([433955a](https://github.com/denolehov/annot/commit/433955a5fdf701c9a451f1ffed334a1858ba952d))
+* update the annot version to 0.8.0. ([8cf869d](https://github.com/denolehov/annot/commit/8cf869d2983f603a199f1ef7decffcdc82642c22))
+* update the annot version to 0.8.0. ([bcb2b94](https://github.com/denolehov/annot/commit/bcb2b947bdf140bfce160e0e9bbcd34f936a9d6f))
+
 ## [0.8.0](https://github.com/denolehov/annot/compare/v0.7.1...v0.8.0) (2026-05-14)
 
 
