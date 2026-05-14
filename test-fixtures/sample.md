@@ -38,7 +38,7 @@ Create custom modes via Command Palette (**:**) → "Exit Modes".
 
 ## Session Comment
 
-Press **g** now.
+Press **Shift+C** now.
 
 The session comment is **global context** that frames all your annotations:
 - "Focus on error handling, ignore style"
@@ -139,7 +139,7 @@ Annotate rows. Use `/replace` to suggest changes:
 | Shift+drag | Select range |
 | Cmd+Enter | Seal annotation |
 | Tab | Cycle exit mode |
-| g | Session comment |
+| Shift+C | Session comment |
 | : | Command Palette |
 
 ---
@@ -191,7 +191,7 @@ In CLI mode, image paste is disabled (text-only output).
 | **Cmd+Enter** | Seal annotation |
 | **Escape** | Cancel / close modal |
 | **Tab / Shift+Tab** | Cycle exit modes |
-| **g** | Session comment |
+| **Shift+C** | Session comment |
 | **:** | Command Palette |
 | **Cmd+S** | Save to file |
 | **Cmd+/-/0** | Zoom |
