@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.0](https://github.com/denolehov/annot/compare/v0.7.1...v0.8.0) (2026-05-14)
+
+
+### Features
+
+* **window-state:** key window geometry by display configuration ([3057359](https://github.com/denolehov/annot/commit/305735919990c6461db4aa4bcf226b7d216332cc))
+
+
+### Bug Fixes
+
+* **mcp:** restore the MCP review window onto its remembered monitor ([9818e43](https://github.com/denolehov/annot/commit/9818e43ec0cfcb21672cdcbaa4f52d4969b36679))
+* **mermaid:** open diagram windows on the remembered monitor ([0bab25b](https://github.com/denolehov/annot/commit/0bab25b7cfb312e8513266c23e8865a74abd02b1))
+
 ## [0.7.1](https://github.com/denolehov/annot/compare/v0.7.0...v0.7.1) (2026-03-01)
 
 
