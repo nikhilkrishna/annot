@@ -34,7 +34,40 @@ pnpm check
 
 **Dev vs Build gotcha**: `cargo build` produces a binary that connects to localhost:1420. For standalone testing, use `pnpm tauri build --debug`.
 
-## NixOS / Linux
+## Ubuntu / Linux
+
+Install system dependencies before running any build commands:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  libwebkit2gtk-4.1-dev \
+  build-essential \
+  file \
+  libxdo-dev \
+  libssl-dev \
+  libayatana-appindicator3-dev \
+  librsvg2-dev \
+  libgstreamer1.0-dev \
+  libgstreamer-plugins-base1.0-dev \
+  gstreamer1.0-plugins-good \
+  gstreamer1.0-plugins-bad \
+  libgstreamer-plugins-bad1.0-dev
+```
+
+Then install Rust (if not already present):
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+MCP registration on Linux (`mcpServers` in settings.json is not supported — use CLI):
+
+```bash
+claude mcp add --scope user annot annot mcp
+```
+
+## NixOS
 
 A `flake.nix` is provided. Enter the dev shell before running any build commands:
 
@@ -51,11 +84,7 @@ To install the binary into your Nix profile (wraps it with the required env vars
 nix profile install path:.   # run outside nix develop
 ```
 
-MCP registration on Linux (settings.json mcpServers is not supported — use CLI):
-
-```bash
-claude mcp add --scope user annot annot mcp
-```
+MCP registration — same as Ubuntu above.
 
 ## Architecture
 
