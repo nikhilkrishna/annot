@@ -15,6 +15,7 @@ use crate::input::{ContentSource, DiffSource, McpSource};
 use crate::output::FormatResult;
 use crate::review::{ActiveReview, Review};
 use crate::state::AppState;
+use crate::window_state::{self, WindowType};
 use crate::SessionLock;
 use tools::{
     GetBookmarkInput, ListBookmarksInput, ReviewContentInput, ReviewDiffInput, ReviewFileInput,
@@ -423,9 +424,28 @@ fn run_session_with_state(
         builder = builder.traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
     }
 
-    let _window = builder
+    let window = builder
         .build()
         .map_err(|e| format!("Failed to create window: {}", e))?;
+
+    // Restore the review window onto the monitor it was last used on. The MCP
+    // window shares the "main" slot — it is the main review window, just
+    // launched via MCP instead of the CLI.
+    window_state::restore_window_state(&window, WindowType::Main);
+
+    // Persist geometry on move/resize/close so the placement is remembered for
+    // the next session (the window may be destroyed without a CloseRequested).
+    let window_for_save = window.clone();
+    window.on_window_event(move |event| {
+        if matches!(
+            event,
+            tauri::WindowEvent::CloseRequested { .. }
+                | tauri::WindowEvent::Moved(_)
+                | tauri::WindowEvent::Resized(_)
+        ) {
+            let _ = window_state::save_window_state(&window_for_save, WindowType::Main);
+        }
+    });
 
     // Block until result received
     let result = rx.recv().map_err(|e| format!("Failed to receive result: {}", e))?;
