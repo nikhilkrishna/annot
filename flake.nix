@@ -10,7 +10,29 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+
+        # Runtime env vars needed by the binary (same as devShell)
+        gstPluginPath = pkgs.lib.concatStringsSep ":" [
+          "${pkgs.gst_all_1.gstreamer.out}/lib/gstreamer-1.0"
+          "${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0"
+          "${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0"
+          "${pkgs.gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0"
+        ];
       in {
+        # Install with: nix profile install path:.
+        # Requires the binary to be pre-built: pnpm tauri build
+        packages.default = pkgs.runCommand "annot" {
+          nativeBuildInputs = [ pkgs.makeWrapper ];
+          meta.mainProgram = "annot";
+        } ''
+          mkdir -p $out/bin
+          makeWrapper ${./src-tauri/target/release/annot} $out/bin/annot \
+            --set GDK_BACKEND x11 \
+            --set WEBKIT_DISABLE_DMABUF_RENDERER 1 \
+            --set GST_PLUGIN_SYSTEM_PATH "${gstPluginPath}" \
+            --set GIO_MODULE_DIR "${pkgs.glib-networking}/lib/gio/modules"
+        '';
+
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
             pkg-config
