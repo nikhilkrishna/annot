@@ -9,6 +9,7 @@ export interface KeyboardHandlers {
   onOpenCommandPalette?: () => void;
   onOpenCommandPaletteWithNamespace?: (namespace: 'exit-modes') => void;
   onOpenSaveModal?: () => void;
+  onCloseWindow?: () => void;
   onOpenSearch?: () => void;
   onOpenHelp?: () => void;
   onCreateSessionBookmark?: () => void;
@@ -126,8 +127,8 @@ export function useKeyboard(handlers: KeyboardHandlers, state: KeyboardState) {
       }
     }
 
-    // Shift+C for global/session comment
-    if (e.key === 'C' && !e.metaKey && !e.ctrlKey && !state.isEditorActive()) {
+    // 'g' or Shift+C for global/session comment
+    if ((e.key === 'g' || e.key === 'C') && !e.metaKey && !e.ctrlKey && !state.isEditorActive()) {
       if (isInEditorOrInput()) return;
       e.preventDefault();
       handlers.onOpenSessionEditor?.();
@@ -149,6 +150,13 @@ export function useKeyboard(handlers: KeyboardHandlers, state: KeyboardState) {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       e.preventDefault();
       handlers.onOpenHelp?.();
+      return;
+    }
+
+    // Cmd+W / Ctrl+W to close window (on macOS this is handled natively; on Linux it must be explicit)
+    if (e.key === 'w' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handlers.onCloseWindow?.();
       return;
     }
 

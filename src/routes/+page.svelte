@@ -683,6 +683,7 @@
         overlay.openCommandPalette(namespace);
       },
       onOpenSaveModal: openSaveModal,
+      onCloseWindow: () => getCurrentWindow().close(),
       onOpenSearch: () => search.open(),
       onOpenHelp: () => overlay.openHelp(),
       onCreateSessionBookmark: handleToggleBookmark,
