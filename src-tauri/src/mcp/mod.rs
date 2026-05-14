@@ -412,18 +412,18 @@ fn run_session_with_state(
         *slot.lock() = Some(review);
     }
 
-    let mut builder = WebviewWindowBuilder::new(app_handle, &window_label, tauri::WebviewUrl::App("index.html".into()))
-        .title("annot")
-        .inner_size(1000.0, 700.0)
-        .visible(false); // Will be shown after content loads
-
-    #[cfg(target_os = "macos")]
-    {
-        builder = builder
+    let builder = {
+        let b = WebviewWindowBuilder::new(app_handle, &window_label, tauri::WebviewUrl::App("index.html".into()))
+            .title("annot")
+            .inner_size(1000.0, 700.0)
+            .visible(false); // Will be shown after content loads
+        #[cfg(target_os = "macos")]
+        let b = b
             .title_bar_style(tauri::TitleBarStyle::Overlay)
             .hidden_title(true)
             .traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
-    }
+        b
+    };
 
     let window = builder
         .build()
