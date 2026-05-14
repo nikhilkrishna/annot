@@ -20,7 +20,6 @@ jobs:
     runs-on: macos-26  # Apple Silicon runner (Tahoe)
     outputs:
       tag: ${{ steps.get-tag.outputs.tag }}
-      version: ${{ steps.get-tag.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,7 +36,6 @@ jobs:
             TAG="${{ github.ref_name }}"
           fi
           echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
           echo "Using tag: $TAG"
 
       - uses: actions/checkout@v4
@@ -118,11 +116,14 @@ jobs:
           homebrew_owner: denolehov
           homebrew_tap: homebrew-tap
           github_token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          # Pin the version explicitly. Otherwise Homebrew infers it from the
-          # URL, and the darwin-arm64 asset (".../annot-x.y.z-darwin-arm64.tar.gz")
-          # makes its heuristic extract "64" from "arm64" — which then compares
+          # Pin the version explicitly, otherwise Homebrew infers it from the
+          # URL — and the darwin-arm64 asset (".../annot-x.y.z-darwin-arm64.tar.gz")
+          # makes its heuristic extract "64" from "arm64", which then compares
           # greater than real versions and breaks `brew upgrade`.
-          version: ${{ needs.build-macos.outputs.version }}
+          # homebrew-releaser substitutes this value as the git tag in the
+          # source/asset URLs, so it must be the v-prefixed tag — it strips the
+          # leading "v" itself for the formula's `version` line.
+          version: ${{ needs.build-macos.outputs.tag }}
           install: |
             prefix.install "annot.app"
             bin.install_symlink prefix/"annot.app/Contents/MacOS/annot"
