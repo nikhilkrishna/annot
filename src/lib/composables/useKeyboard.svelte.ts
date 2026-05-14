@@ -127,8 +127,8 @@ export function useKeyboard(handlers: KeyboardHandlers, state: KeyboardState) {
       }
     }
 
-    // 'g' or Shift+C for global/session comment
-    if ((e.key === 'g' || e.key === 'C') && !e.metaKey && !e.ctrlKey && !state.isEditorActive()) {
+    // Shift+C for global/session comment
+    if (e.key === 'C' && !e.metaKey && !e.ctrlKey && !state.isEditorActive()) {
       if (isInEditorOrInput()) return;
       e.preventDefault();
       handlers.onOpenSessionEditor?.();
