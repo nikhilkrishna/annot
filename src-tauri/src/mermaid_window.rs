@@ -92,13 +92,14 @@ pub fn open_mermaid_window(
     .title(format!("{}:{}-{}", filename, start_line, end_line))
     .inner_size(600.0, 500.0)
     .min_inner_size(300.0, 200.0)
-    .visible(false)
-    .title_bar_style(tauri::TitleBarStyle::Overlay)
-    .hidden_title(true);
+    .visible(false);
 
     #[cfg(target_os = "macos")]
     {
-        builder = builder.traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
+        builder = builder
+            .title_bar_style(tauri::TitleBarStyle::Overlay)
+            .hidden_title(true)
+            .traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
     }
 
     let new_window = builder

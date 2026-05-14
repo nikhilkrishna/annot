@@ -141,13 +141,14 @@ pub fn run(state: AppState, context: tauri::Context, json_output: bool) {
             )
             .title("annot")
             .inner_size(1000.0, 700.0)
-            .visible(false) // Will be shown after content loads
-            .title_bar_style(tauri::TitleBarStyle::Overlay)
-            .hidden_title(true);
+            .visible(false); // Will be shown after content loads
 
             #[cfg(target_os = "macos")]
             {
-                builder = builder.traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
+                builder = builder
+                    .title_bar_style(tauri::TitleBarStyle::Overlay)
+                    .hidden_title(true)
+                    .traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
             }
 
             let window = builder.build()?;
