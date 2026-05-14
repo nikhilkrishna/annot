@@ -80,7 +80,7 @@
 		<Icon name="copy-code" />
 	</button>
 	{#if open}
-		<div bind:this={menuEl} class="copy-menu">
+		<div bind:this={menuEl} class="copy-menu" data-tauri-drag-region="false">
 			<button class="copy-menu-item" onclick={() => copyToClipboard('content')}>Content</button>
 			<button class="copy-menu-item" onclick={() => copyToClipboard('annotations')}
 				>Annotations</button

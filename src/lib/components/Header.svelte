@@ -45,18 +45,19 @@
   const displayLabel = $derived(label.includes('/') ? label.split('/').pop() ?? label : label);
 </script>
 
-<header class="header" data-tauri-drag-region>
-  <div class="header-left" data-tauri-drag-region>
+<header class="header" data-tauri-drag-region="deep">
+  <div class="header-left">
     {#if diffMetadata && currentFile}
       <!-- Diff mode: show hunk metadata -->
       {@const fileName = currentFile.new_name ?? currentFile.old_name ?? 'unknown'}
       {@const fileCount = diffMetadata.files.length}
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-      <span class="diff-header-info" data-tauri-drag-region>
+      <span class="diff-header-info">
         <span
           class="diff-header-file"
           class:has-comment={hasSessionComment}
           onclick={onOpenSessionEditor}
+          data-tauri-drag-region="false"
         >
           {fileName}
           {#if fileCount > 1}
@@ -64,13 +65,13 @@
           {/if}
         </span>
         {#if currentHunk}
-          <span class="diff-header-sep" data-tauri-drag-region>·</span>
-          <span class="diff-header-range" data-tauri-drag-region>
+          <span class="diff-header-sep">·</span>
+          <span class="diff-header-range">
             <span class="diff-header-old">-{currentHunk.old_start},{currentHunk.old_count}</span>
             <span class="diff-header-new">+{currentHunk.new_start},{currentHunk.new_count}</span>
           </span>
           {#if currentHunk.function_context}
-            <span class="diff-header-fn" data-tauri-drag-region>
+            <span class="diff-header-fn">
               {#if currentHunk.function_context_html}
                 {@html currentHunk.function_context_html}
               {:else}
@@ -83,21 +84,22 @@
     {:else if markdownMetadata && sectionBreadcrumb.length > 0}
       <!-- Markdown mode: depth-based breadcrumb -->
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-      <span class="md-header-info" data-tauri-drag-region>
+      <span class="md-header-info">
         <!-- Filename -->
         <span
           class="md-header-file"
           class:has-comment={hasSessionComment}
           onclick={onOpenSessionEditor}
           title={label}
+          data-tauri-drag-region="false"
         ><span class="md-header-title">{displayLabel}</span></span>
 
         <!-- Show only the current section (deepest in breadcrumb) -->
         {#if headerCurrentSection}
-          <span class="md-header-sep" data-tauri-drag-region>·</span>
-          <span class="md-header-section" data-tauri-drag-region>
-            <span class="md-header-level" data-tauri-drag-region>{'#'.repeat(headerCurrentSection.level)}</span>
-            <span class="md-header-title" data-tauri-drag-region>{headerCurrentSection.title}</span>
+          <span class="md-header-sep">·</span>
+          <span class="md-header-section">
+            <span class="md-header-level">{'#'.repeat(headerCurrentSection.level)}</span>
+            <span class="md-header-title">{headerCurrentSection.title}</span>
           </span>
         {/if}
       </span>
@@ -109,6 +111,7 @@
         class:has-comment={hasSessionComment}
         onclick={onOpenSessionEditor}
         title={label}
+        data-tauri-drag-region="false"
       >{displayLabel}</span>
     {/if}
   </div>
