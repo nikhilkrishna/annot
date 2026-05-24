@@ -4,7 +4,7 @@ use std::hash::Hash;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use fs4::fs_std::FileExt;
+use fs4::FileExt;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use crate::state::{Bookmark, ExitMode, Tag, TagUsageStats};
@@ -138,7 +138,7 @@ fn save_merged<T: Mergeable + Serialize + DeserializeOwned>(
 
     // Create lock file and acquire exclusive lock
     let lock_file = File::create(&lock_path)?;
-    lock_file.lock_exclusive()?;
+    lock_file.lock()?;
 
     // Read current disk state
     let disk: Vec<T> = if data_path.exists() {
@@ -247,7 +247,7 @@ pub fn save_tag_usage(stats: &TagUsageStats) -> io::Result<()> {
 
     // Create lock file and acquire exclusive lock
     let lock_file = File::create(&lock_path)?;
-    lock_file.lock_exclusive()?;
+    lock_file.lock()?;
 
     // Read current disk state and merge (additive)
     let disk_stats: TagUsageStats = if data_path.exists() {
@@ -311,7 +311,7 @@ pub fn save_config(config: &Config) -> io::Result<()> {
 
     // Create lock file and acquire exclusive lock
     let lock_file = File::create(&lock_path)?;
-    lock_file.lock_exclusive()?;
+    lock_file.lock()?;
 
     // Ensure version is current
     let mut config = config.clone();

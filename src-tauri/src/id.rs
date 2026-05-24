@@ -3,7 +3,7 @@
 //! Follows jj's approach: random bytes encoded as "reverse hex" using k-z instead of 0-9a-f.
 //! This produces IDs like `kmwvzxyqstnp` — always lowercase, always 12 chars.
 
-use rand::Rng;
+use rand::RngExt;
 
 /// jj-style hex alphabet: 0-9a-f maps to z-k (reversed).
 /// 0→z, 1→y, 2→x, 3→w, 4→v, 5→u, 6→t, 7→s, 8→r, 9→q, a→p, b→o, c→n, d→m, e→l, f→k
@@ -23,8 +23,8 @@ const HEX_TO_JJ: [char; 16] = [
 /// assert!(id.chars().all(|c| matches!(c, 'k'..='z')));
 /// ```
 pub fn generate() -> String {
-    let mut rng = rand::thread_rng();
-    let bytes: [u8; 6] = rng.gen();
+    let mut rng = rand::rng();
+    let bytes: [u8; 6] = rng.random();
 
     let mut result = String::with_capacity(12);
     for byte in bytes {
