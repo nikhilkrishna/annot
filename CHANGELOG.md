@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/denolehov/annot/compare/v0.9.0...v0.9.1) (2026-05-24)
+
+
+### Bug Fixes
+
+* **ci:** remove explicit pnpm version to avoid conflict with packageManager field ([ac1083f](https://github.com/denolehov/annot/commit/ac1083f25dad00af4ee78be27cbc0cdfbbf59a74))
+
 ## [0.9.0](https://github.com/denolehov/annot/compare/v0.8.0...v0.9.0) (2026-05-14)
 
 
