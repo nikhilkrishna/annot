@@ -1,38 +1,65 @@
 {
-  description = "annot dev shell — Tauri v2 + SvelteKit on Linux";
+  description = "annot — Human-in-the-loop annotation for AI workflows (Tauri v2 + SvelteKit)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+        isLinux = pkgs.stdenv.hostPlatform.isLinux;
 
-        # Runtime env vars needed by the binary (same as devShell)
-        gstPluginPath = pkgs.lib.concatStringsSep ":" [
-          "${pkgs.gst_all_1.gstreamer.out}/lib/gstreamer-1.0"
-          "${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0"
-          "${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0"
-          "${pkgs.gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0"
-        ];
-      in {
+        # GStreamer plugin path for WebKit2GTK media support (Linux only)
+        gstPluginPath = pkgs.lib.optionalString isLinux (
+          pkgs.lib.concatStringsSep ":" [
+            "${pkgs.gst_all_1.gstreamer.out}/lib/gstreamer-1.0"
+            "${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0"
+            "${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0"
+            "${pkgs.gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0"
+          ]
+        );
+      in
+      {
+        # Formatter (nixfmt-rfc-style)
+        formatter = pkgs.nixfmt-rfc-style;
+
+        # Binary package (requires pre-built artifacts from `pnpm tauri build`)
         # Install with: nix profile install path:.
-        # Requires the binary to be pre-built: pnpm tauri build
-        packages.default = pkgs.runCommand "annot" {
-          nativeBuildInputs = [ pkgs.makeWrapper ];
-          meta.mainProgram = "annot";
-        } ''
-          mkdir -p $out/bin
-          makeWrapper ${./src-tauri/target/release/annot} $out/bin/annot \
-            --set GDK_BACKEND x11 \
-            --set WEBKIT_DISABLE_DMABUF_RENDERER 1 \
-            --set GST_PLUGIN_SYSTEM_PATH "${gstPluginPath}" \
-            --set GIO_MODULE_DIR "${pkgs.glib-networking}/lib/gio/modules"
-        '';
+        packages.default =
+          pkgs.runCommand "annot"
+            {
+              nativeBuildInputs = [ pkgs.makeWrapper ];
+              meta.mainProgram = "annot";
+            }
+            (
+              if isDarwin then
+                ''
+                  mkdir -p $out/{bin,Applications}
+                  cp -r ${./src-tauri/target/release/bundle/macos/annot.app} $out/Applications/
+                  makeWrapper $out/Applications/annot.app/Contents/MacOS/annot $out/bin/annot
+                ''
+              else
+                ''
+                  mkdir -p $out/bin
+                  makeWrapper ${./src-tauri/target/release/annot} $out/bin/annot \
+                    --set GDK_BACKEND x11 \
+                    --set WEBKIT_DISABLE_DMABUF_RENDERER 1 \
+                    --set GST_PLUGIN_SYSTEM_PATH "${gstPluginPath}" \
+                    --set GIO_MODULE_DIR "${pkgs.glib-networking}/lib/gio/modules"
+                ''
+            );
 
+        # Development shell
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
             pkg-config
@@ -44,56 +71,61 @@
             pnpm
           ];
 
-          buildInputs = with pkgs; [
-            # Tauri v2 requires WebKit2GTK 4.1 (not 4.0)
-            webkitgtk_4_1
-            gtk3
-            glib
-            glib-networking   # TLS support for WebKit
-            libsoup_3
-            openssl
-            cairo
-            pango
-            gdk-pixbuf
-            librsvg
-            at-spi2-atk
-            at-spi2-core
+          buildInputs =
+            with pkgs;
+            [ openssl ]
+            ++ pkgs.lib.optionals isLinux [
+              # Tauri v2 WebView (WebKit2GTK 4.1)
+              webkitgtk_4_1
+              gtk3
+              glib
+              glib-networking
+              libsoup_3
+              cairo
+              pango
+              gdk-pixbuf
+              librsvg
+              at-spi2-atk
+              at-spi2-core
 
-            # GStreamer — required by WebKit2GTK for media/video support
-            gst_all_1.gstreamer
-            gst_all_1.gst-plugins-base   # provides appsink
-            gst_all_1.gst-plugins-good
-            gst_all_1.gst-plugins-bad
+              # GStreamer (media/video support for WebKit)
+              gst_all_1.gstreamer
+              gst_all_1.gst-plugins-base
+              gst_all_1.gst-plugins-good
+              gst_all_1.gst-plugins-bad
 
-            # arboard (clipboard) — X11 backend
-            libxcb
-            xclip
+              # Clipboard support (arboard X11 backend)
+              libxcb
+              xclip
 
-            # tauri-plugin-opener uses xdg-open on Linux
-            xdg-utils
-          ];
+              # tauri-plugin-opener
+              xdg-utils
+            ];
 
-          # PKG_CONFIG_PATH is usually set automatically by mkShell for buildInputs,
-          # but openssl sometimes needs a nudge.
           shellHook = ''
-            export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig:${pkgs.webkitgtk_4_1.dev}/lib/pkgconfig:$PKG_CONFIG_PATH"
+            # OpenSSL pkg-config path
+            export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig:$PKG_CONFIG_PATH"
 
-            # GStreamer plugin path so WebKit2GTK can find appsink and friends
-            export GST_PLUGIN_SYSTEM_PATH="${pkgs.gst_all_1.gstreamer.out}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-base}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-good}/lib/gstreamer-1.0:${pkgs.gst_all_1.gst-plugins-bad}/lib/gstreamer-1.0"
+            ${pkgs.lib.optionalString isLinux ''
+              # WebKitGTK pkg-config
+              export PKG_CONFIG_PATH="${pkgs.webkitgtk_4_1.dev}/lib/pkgconfig:$PKG_CONFIG_PATH"
 
-            # Force XWayland — WebKit2GTK's native Wayland/DMABuf renderer is broken on NixOS
-            export GDK_BACKEND=x11
-            export WEBKIT_DISABLE_DMABUF_RENDERER=1
+              # GStreamer plugin discovery
+              export GST_PLUGIN_SYSTEM_PATH="${gstPluginPath}"
 
-            # GIO modules path so glib-networking (TLS) is found by WebKit at runtime
-            export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules"
+              # Force X11 (WebKit2GTK Wayland/DMABuf is broken on NixOS)
+              export GDK_BACKEND=x11
+              export WEBKIT_DISABLE_DMABUF_RENDERER=1
 
-            # pnpm@10.28.0 is pinned in package.json; nixpkgs ships the same version.
-            # Disable strict corepack enforcement so the nixpkgs pnpm binary is used directly.
+              # GIO modules for TLS support
+              export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules"
+            ''}
+
+            # Use nixpkgs pnpm directly (disable corepack strict mode)
             export COREPACK_ENABLE_STRICT=0
 
-            echo "annot dev shell ready"
-            echo "  pnpm install     — install JS deps"
+            echo "annot dev shell ready (${if isDarwin then "macOS" else "Linux"})"
+            echo "  pnpm install     — install JS dependencies"
             echo "  pnpm tauri dev   — start dev server + Tauri window"
             echo "  pnpm tauri build — production build"
           '';
