@@ -32,6 +32,18 @@ pnpm tauri build
 </details>
 
 <details>
+<summary>Build from source (macOS — with Nix)</summary>
+
+```bash
+git clone https://github.com/denolehov/annot.git && cd annot
+nix develop          # enter dev shell with all build dependencies
+pnpm install
+pnpm tauri build     # .app bundle at src-tauri/target/release/bundle/macos/
+```
+
+</details>
+
+<details>
 <summary>Build from source (Ubuntu)</summary>
 
 Install system dependencies:
@@ -77,7 +89,7 @@ pnpm tauri build     # binary at src-tauri/target/release/annot
 Or install into your Nix profile (wraps the binary with required env vars):
 
 ```bash
-nix profile install path:.
+nix profile add path:.
 ```
 
 > **Wayland note**: The installed binary automatically sets `GDK_BACKEND=x11` and
