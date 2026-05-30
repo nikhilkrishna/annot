@@ -34,7 +34,8 @@
         formatter = pkgs.nixfmt-rfc-style;
 
         # Binary package (requires pre-built artifacts from `pnpm tauri build`)
-        # Install with: nix profile install path:.
+        # Install with: nix profile add path:.
+        # Remove with: nix profile remove annot
         packages.default =
           pkgs.runCommand "annot"
             {
@@ -128,6 +129,10 @@
             echo "  pnpm install     — install JS dependencies"
             echo "  pnpm tauri dev   — start dev server + Tauri window"
             echo "  pnpm tauri build — production build"
+            echo "  pnpm demo        — open demo with test fixture"
+            echo "  pnpm test        — run vitest suite"
+            echo "  pnpm check       — svelte-check typecheck"
+            echo "  pnpm run         — list all available scripts"
           '';
         };
       }
