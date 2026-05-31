@@ -2,7 +2,7 @@
   description = "annot — Human-in-the-loop annotation for AI workflows (Tauri v2 + SvelteKit)";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -30,8 +30,8 @@
         );
       in
       {
-        # Formatter (nixfmt-rfc-style)
-        formatter = pkgs.nixfmt-rfc-style;
+        # Formatter (nixfmt)
+        formatter = pkgs.nixfmt;
 
         # Binary package (requires pre-built artifacts from `pnpm tauri build`)
         # Install with: nix profile add path:.
