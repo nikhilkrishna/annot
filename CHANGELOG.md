@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.10.0](https://github.com/denolehov/annot/compare/v0.9.1...v0.10.0) (2026-06-02)
+
+
+### Features
+
+* add a mermaid target for demo. ([c29075d](https://github.com/denolehov/annot/commit/c29075d45d1cb6f3241ee9984d7b2f42cb757213))
+* add a mermaid target for demo. ([47877a2](https://github.com/denolehov/annot/commit/47877a2d5a887f2f9bf3aa777fa4d61ee2f5a5ca))
+* add support for darwin in flake. ([f899c03](https://github.com/denolehov/annot/commit/f899c034dfd43d50e1e57326c7b6cd2e7e0d9116))
+* add support for darwin in flake. ([ce6698b](https://github.com/denolehov/annot/commit/ce6698b3afd4068b398f1ec64f486bbd164b7977))
+
+
+### Bug Fixes
+
+* flake install in macos. ([0ccb5b0](https://github.com/denolehov/annot/commit/0ccb5b0a0b740d6c105b035ebfa21f72d4af1a15))
+* flake install in macos. ([d95f823](https://github.com/denolehov/annot/commit/d95f823ae9ff9a0abfd447ba892dc6a8ef359a13))
+
 ## [0.9.1](https://github.com/denolehov/annot/compare/v0.9.0...v0.9.1) (2026-05-24)
 
 
