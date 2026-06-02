@@ -34,7 +34,7 @@
         formatter = pkgs.nixfmt;
 
         # Binary package (requires pre-built artifacts from `pnpm tauri build`)
-        # Install with: nix profile add path:.
+        # Install with: nix profile add path:. --impure
         # Remove with: nix profile remove annot
         packages.default =
           pkgs.runCommand "annot"
@@ -45,9 +45,8 @@
             (
               if isDarwin then
                 ''
-                  mkdir -p $out/{bin,Applications}
-                  cp -r ${./src-tauri/target/release/bundle/macos/annot.app} $out/Applications/
-                  makeWrapper $out/Applications/annot.app/Contents/MacOS/annot $out/bin/annot
+                  mkdir -p $out/bin
+                  makeWrapper ${./src-tauri/target/release/annot} $out/bin/annot
                 ''
               else
                 ''
