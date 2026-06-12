@@ -40,8 +40,15 @@
 			// Wait for DOM update
 			await tick();
 
-			// Initialize pan/zoom and show window
+			// Initialize pan/zoom (sizes/positions the window).
 			await initPanZoom();
+
+			// Always reveal the window once content is ready, regardless of
+			// whether initPanZoom completed. The window is created hidden, and
+			// on WebView2 (Windows) only an explicit show() makes it visible —
+			// geometry calls alone do not. initPanZoom bails early if the SVG
+			// has not mounted yet, so showing here guarantees visibility.
+			await getCurrentWindow().show();
 		} catch (e) {
 			error = String(e);
 			loading = false;
@@ -60,7 +67,14 @@
 	async function initPanZoom() {
 		if (!canvasEl) return;
 
-		const svgEl = canvasEl.querySelector('svg');
+		// The SVG is injected via {@html} and may not be in the DOM after a
+		// single tick() on slower WebView engines (WebView2). Wait one animation
+		// frame and re-query before giving up, so panzoom init isn't skipped.
+		let svgEl = canvasEl.querySelector('svg');
+		if (!svgEl) {
+			await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+			svgEl = canvasEl.querySelector('svg');
+		}
 		if (!svgEl) return;
 
 		// Get intrinsic size from viewBox or attributes
@@ -80,9 +94,6 @@
 		// Remove forced dimensions so SVG renders at native size
 		svgEl.style.width = `${diagramWidth}px`;
 		svgEl.style.height = `${diagramHeight}px`;
-
-		// Resize window to fit diagram content
-		const win = getCurrentWindow();
 
 		// Calculate window size to fit diagram at 100%
 		const windowWidth = Math.max(300, diagramWidth + DIAGRAM_PADDING);
@@ -151,8 +162,8 @@
 			}
 		});
 
-		// Show the window
-		await win.show();
+		// Window visibility is handled by the onMount caller so it is shown even
+		// if this function returns early before reaching here.
 	}
 
 	function zoomIn() {

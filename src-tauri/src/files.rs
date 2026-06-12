@@ -23,7 +23,10 @@ impl FileCache {
     pub fn new() -> Self {
         Self {
             files: Vec::new(),
-            cached_at: Instant::now() - Duration::from_secs(3600), // Start stale
+            // Use checked_sub to avoid overflow on Windows where Instant can be near epoch
+            cached_at: Instant::now()
+                .checked_sub(Duration::from_secs(3600))
+                .unwrap_or_else(Instant::now),
             root: None,
         }
     }
@@ -36,7 +39,10 @@ impl FileCache {
 
     /// Invalidate the cache (called on window focus).
     pub fn invalidate(&mut self) {
-        self.cached_at = Instant::now() - Duration::from_secs(3600);
+        // Use checked_sub to avoid overflow on Windows where Instant can be near epoch
+        self.cached_at = Instant::now()
+            .checked_sub(Duration::from_secs(3600))
+            .unwrap_or_else(Instant::now);
     }
 
     /// Refresh the cache by scanning the project directory.
