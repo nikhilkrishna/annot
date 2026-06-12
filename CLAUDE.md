@@ -106,6 +106,29 @@ MCP registration — same as Ubuntu above.
 
 **Three review modes**: `review_file`, `review_diff`, `review_content` — all block until window closes.
 
+### Window creation & the WebView2 deadlock (READ BEFORE ADDING ANY WINDOW)
+
+`WebviewWindowBuilder::build()` re-enters the OS event loop on Windows (WebView2).
+Call it from a thread that is **blocking the main/UI thread** and it deadlocks
+forever — no error, no window. This has bitten us twice (diagram windows, then the
+MCP server). Use the right pattern for where the code runs:
+
+- **From a `#[tauri::command]`** — make the command `async`. Sync commands run on
+  the main thread; `async` ones run on the runtime, freeing the event loop to
+  service `build()`. Example: `mermaid_window.rs::open_mermaid_window`,
+  `excalidraw_window.rs`.
+- **From any other background thread** (e.g. the MCP server's `spawn_blocking`
+  pool) — never call `build()` directly. Marshal it onto the main thread with
+  `app_handle.run_on_main_thread(...)` and send the built window's label back over
+  an `mpsc` channel. Example: `mcp/mod.rs::run_session_with_state`.
+
+Never call `build()` from a synchronous command, or while holding a lock the main
+thread also needs.
+
+**Operational corollary**: a running MCP server (`annot-dev`) holds a lock on
+`target/debug/annot.exe`. Builds then fail with `Access is denied (os error 5)`.
+Kill the stray `annot.exe` before rebuilding.
+
 ## Reference Materials
 
 - `docs/features.md` — **Canonical product features** (update when adding features)

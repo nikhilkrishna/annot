@@ -412,24 +412,42 @@ fn run_session_with_state(
         *slot.lock() = Some(review);
     }
 
-    let builder = {
-        let b = WebviewWindowBuilder::new(app_handle, &window_label, tauri::WebviewUrl::App("index.html".into()))
+    // Build the window on the main thread. WebView2 (Windows) requires window
+    // creation on the UI thread; calling build() from the MCP server's blocking
+    // thread pool deadlocks. Marshal via run_on_main_thread + channel.
+    let app_for_build = app_handle.clone();
+    let label_for_build = window_label.clone();
+    let (build_tx, build_rx) = std::sync::mpsc::channel();
+    app_handle
+        .run_on_main_thread(move || {
+            let b = WebviewWindowBuilder::new(
+                &app_for_build,
+                &label_for_build,
+                tauri::WebviewUrl::App("index.html".into()),
+            )
             .title("annot")
             .inner_size(1000.0, 700.0)
             .visible(false); // Will be shown after content loads
-        #[cfg(target_os = "macos")]
-        let b = b
-            .title_bar_style(tauri::TitleBarStyle::Overlay)
-            .hidden_title(true)
-            .traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
-        #[cfg(target_os = "linux")]
-        let b = b.decorations(false);
-        b
-    };
+            #[cfg(target_os = "macos")]
+            let b = b
+                .title_bar_style(tauri::TitleBarStyle::Overlay)
+                .hidden_title(true)
+                .traffic_light_position(tauri::LogicalPosition::new(12.0, 22.0));
+            #[cfg(target_os = "linux")]
+            let b = b.decorations(false);
+            let result = b.build().map(|w| w.label().to_string());
+            let _ = build_tx.send(result);
+        })
+        .map_err(|e| format!("Failed to dispatch to main thread: {}", e))?;
 
-    let window = builder
-        .build()
+    let built_label = build_rx
+        .recv()
+        .map_err(|e| format!("Window build channel error: {}", e))?
         .map_err(|e| format!("Failed to create window: {}", e))?;
+
+    let window = app_handle
+        .get_webview_window(&built_label)
+        .ok_or_else(|| format!("Window {} not found after build", built_label))?;
 
     // Restore the review window onto the monitor it was last used on. The MCP
     // window shares the "main" slot — it is the main review window, just
