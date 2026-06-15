@@ -75,7 +75,10 @@
 			await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
 			svgEl = canvasEl.querySelector('svg');
 		}
-		if (!svgEl) return;
+		if (!svgEl) {
+			console.warn('SVG element not found after requestAnimationFrame; pan/zoom disabled');
+			return;
+		}
 
 		// Get intrinsic size from viewBox or attributes
 		const viewBox = svgEl.getAttribute('viewBox');

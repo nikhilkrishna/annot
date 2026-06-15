@@ -12,6 +12,13 @@ use ignore::WalkBuilder;
 use sublime_fuzzy::best_match;
 use tauri::State;
 
+/// How long the file cache remains valid before requiring a refresh.
+const CACHE_VALIDITY_SECS: u64 = 60;
+
+/// Duration to subtract from `Instant::now()` to force cache staleness.
+/// Must be greater than `CACHE_VALIDITY_SECS` so `is_stale()` returns true.
+const STALE_OFFSET_SECS: u64 = CACHE_VALIDITY_SECS + 1;
+
 /// Cached list of project files with timestamp for staleness detection.
 pub struct FileCache {
     files: Vec<String>,
@@ -23,26 +30,33 @@ impl FileCache {
     pub fn new() -> Self {
         Self {
             files: Vec::new(),
-            // Use checked_sub to avoid overflow on Windows where Instant can be near epoch
+            // Start stale so first access triggers a refresh. Use checked_sub
+            // to avoid underflow on Windows where Instant can be near epoch.
+            // Fallback to now is safe here: root is None, so is_stale() returns
+            // true anyway due to the root mismatch check.
             cached_at: Instant::now()
-                .checked_sub(Duration::from_secs(3600))
+                .checked_sub(Duration::from_secs(STALE_OFFSET_SECS))
                 .unwrap_or_else(Instant::now),
             root: None,
         }
     }
 
-    /// Check if the cache is stale (older than 60 seconds or different root).
     fn is_stale(&self, root: &str) -> bool {
-        self.cached_at.elapsed() > Duration::from_secs(60)
+        self.cached_at.elapsed() > Duration::from_secs(CACHE_VALIDITY_SECS)
             || self.root.as_deref() != Some(root)
     }
 
     /// Invalidate the cache (called on window focus).
     pub fn invalidate(&mut self) {
-        // Use checked_sub to avoid overflow on Windows where Instant can be near epoch
+        // Set timestamp far enough in the past to exceed CACHE_VALIDITY_SECS.
+        // Use checked_sub to avoid underflow on Windows where Instant can be near epoch.
+        // With STALE_OFFSET_SECS = 61, fallback only triggers if system uptime < 61s,
+        // in which case elapsed() can't exceed 60s anyway — but we also clear root
+        // to guarantee is_stale() returns true.
         self.cached_at = Instant::now()
-            .checked_sub(Duration::from_secs(3600))
+            .checked_sub(Duration::from_secs(STALE_OFFSET_SECS))
             .unwrap_or_else(Instant::now);
+        self.root = None;
     }
 
     /// Refresh the cache by scanning the project directory.
