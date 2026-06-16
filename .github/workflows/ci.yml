@@ -89,3 +89,36 @@ jobs:
 
       - name: Build
         run: pnpm tauri build --debug
+
+  build-windows:
+    name: Build & Test (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.33.4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Node dependencies
+        run: pnpm install
+
+      - name: Frontend tests
+        run: pnpm test
+
+      - name: Rust tests
+        run: pnpm test:rust
+
+      - name: Build
+        run: pnpm tauri build --debug --no-bundle
