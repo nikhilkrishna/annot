@@ -35,7 +35,7 @@ export default defineConfig(async () => ({
   // Don't externalize TipTap packages in SSR to avoid "unused import" warnings
   // (these are browser-only but used inside $effect which doesn't run in SSR)
   ssr: {
-    noExternal: ["@tiptap/core", "@tiptap/starter-kit", "@tiptap/extension-placeholder"],
+    noExternal: ["@tiptap/core", "@tiptap/extension-placeholder"],
   },
 
   build: {

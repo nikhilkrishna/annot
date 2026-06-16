@@ -13,7 +13,7 @@
 use std::collections::HashMap;
 use std::fs;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, LogicalPosition, LogicalSize, Manager, Monitor, WebviewWindow};
@@ -381,7 +381,7 @@ fn save_state_file(file: &StateFile) -> Result<(), String> {
     let dir = ensure_config_dir().map_err(|e| e.to_string())?;
     let path = dir.join(STATE_FILE);
     let content = serde_json::to_string_pretty(file).map_err(|e| e.to_string())?;
-    atomic_write(&path, &content).map_err(|e| e.to_string())
+    crate::config::atomic_write(&path, &content).map_err(|e| e.to_string())
 }
 
 /// Load state for a window type under the current display configuration.
@@ -418,14 +418,6 @@ fn ensure_config_dir() -> io::Result<std::path::PathBuf> {
     })?;
     fs::create_dir_all(&dir)?;
     Ok(dir)
-}
-
-/// Write to a temp file then rename for atomicity.
-fn atomic_write(path: &Path, content: &str) -> io::Result<()> {
-    let temp = path.with_extension("json.tmp");
-    fs::write(&temp, content)?;
-    fs::rename(&temp, path)?;
-    Ok(())
 }
 
 // ════════════════════════════════════════════════════════════════════════════
