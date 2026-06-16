@@ -40,10 +40,16 @@ fn context_hash(file_path: &str, start_line: u32, end_line: u32) -> String {
 }
 
 /// Open a mermaid diagram in a separate window, or focus existing.
+///
+/// This command is `async` deliberately: a synchronous Tauri command runs on
+/// the main/UI thread, and calling `WebviewWindowBuilder::build()` for a second
+/// window from there re-enters the event loop and blocks forever on Windows
+/// (WebView2). Running the command on the async runtime lets the main thread's
+/// event loop service the window creation, so `build()` returns normally.
 #[tauri::command]
-pub fn open_mermaid_window(
+pub async fn open_mermaid_window(
     app: AppHandle,
-    mermaid_state: State<Mutex<MermaidWindowState>>,
+    mermaid_state: State<'_, Mutex<MermaidWindowState>>,
     source: String,
     file_path: String,
     start_line: u32,
@@ -52,17 +58,31 @@ pub fn open_mermaid_window(
     let hash = context_hash(&file_path, start_line, end_line);
     let label = format!("mermaid-{}", hash);
 
-    let mut state = mermaid_state.lock();
+    // Scope the lock to the dedup check + insert only; drop the guard before
+    // building the window so we never hold it across builder.build().
+    {
+        let mut state = mermaid_state.lock();
 
-    // Check if window already exists
-    if let Some((existing_label, _)) = state.windows.get(&hash) {
-        // Try to focus existing window
-        if let Some(existing_window) = app.get_webview_window(existing_label) {
-            let _ = existing_window.set_focus();
-            return Ok(existing_label.clone());
+        // Check if window already exists
+        if let Some((existing_label, _)) = state.windows.get(&hash) {
+            // Try to focus existing window
+            if let Some(existing_window) = app.get_webview_window(existing_label) {
+                let _ = existing_window.set_focus();
+                return Ok(existing_label.clone());
+            }
+            // Window was closed, remove from state
+            state.windows.remove(&hash);
         }
-        // Window was closed, remove from state
-        state.windows.remove(&hash);
+
+        let context = MermaidContext {
+            source,
+            file_path: file_path.clone(),
+            start_line,
+            end_line,
+        };
+
+        // Store context before creating window
+        state.windows.insert(hash.clone(), (label.clone(), context));
     }
 
     // Extract just the filename for the title
@@ -71,17 +91,8 @@ pub fn open_mermaid_window(
         .and_then(|n| n.to_str())
         .unwrap_or(&file_path);
 
-    let context = MermaidContext {
-        source,
-        file_path: file_path.clone(),
-        start_line,
-        end_line,
-    };
-
-    // Store context before creating window
-    state.windows.insert(hash.clone(), (label.clone(), context));
-
-    // Create new window (hidden until frontend sizes it)
+    // Create new window (hidden until frontend sizes it).
+    //
     // Note: We don't use .parent() because macOS child windows can't be
     // dragged to other displays. Instead, mermaid windows are independent.
     let builder = {

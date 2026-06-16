@@ -96,11 +96,17 @@ impl Default for ExcalidrawWindowState {
 }
 
 /// Open an Excalidraw editor in a separate window.
+///
+/// This command is `async` deliberately: a synchronous Tauri command runs on
+/// the main/UI thread, and calling `WebviewWindowBuilder::build()` for a second
+/// window from there re-enters the event loop and blocks forever on Windows
+/// (WebView2). Running the command on the async runtime lets the main thread's
+/// event loop service the window creation, so `build()` returns normally.
 #[tauri::command]
-pub fn open_excalidraw_window(
+pub async fn open_excalidraw_window(
     app: AppHandle,
     window: WebviewWindow,
-    excalidraw_state: State<Mutex<ExcalidrawWindowState>>,
+    excalidraw_state: State<'_, Mutex<ExcalidrawWindowState>>,
     elements: String,
     range_key: String,
     node_ref: NodeRef,
