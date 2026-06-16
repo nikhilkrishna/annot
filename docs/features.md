@@ -262,7 +262,7 @@ All block until window closes, returning structured output with annotations, exi
 
 ## Configuration
 
-Persisted in `~/.config/annot/`:
+Persisted in the OS config directory (`~/.config/annot/` on Linux, `~/Library/Application Support/annot/` on macOS, `%APPDATA%\annot\` on Windows):
 - Tags and exit modes
 - Bookmarks with snapshots
 - Usage statistics
@@ -281,4 +281,5 @@ Native Tauri app for:
   and resize handles); tested on NixOS with Wayland (via XWayland); requires
   `GDK_BACKEND=x11` and `WEBKIT_DISABLE_DMABUF_RENDERER=1` for correct WebKit2GTK
   rendering (baked into the Nix-installed binary automatically)
-- Windows (untested)
+- **Windows** — standard decorated OS window with the native title bar (no custom chrome);
+  builds and runs from source via WebView2; config stored in `%APPDATA%\annot\`
