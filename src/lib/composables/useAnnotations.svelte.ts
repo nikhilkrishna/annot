@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import type { JSONContent } from '@tiptap/core';
 import type { Range } from '$lib/range';
 import type { Line } from '$lib/types';
-import { rangeToKey, isLineInRange, validateRange } from '$lib/range';
+import { rangeToKey, validateRange } from '$lib/range';
 import { extractContentNodes, isContentEmpty } from '$lib/tiptap';
 
 export interface AnnotationEntry {
@@ -17,6 +17,20 @@ export interface UseAnnotationsOptions {
 
 export function useAnnotations(options: UseAnnotationsOptions) {
   let annotations: Record<string, AnnotationEntry> = $state({});
+
+  // Display indices covered by any annotation. Rebuilt once when `annotations`
+  // changes, so per-line `hasAnnotation` is an O(1) Set lookup. Without this,
+  // adding one annotation re-scans every entry for all ~10k lines (O(N·A)) and
+  // stalls the reactive flush — the dominant cost while annotating large files.
+  const annotatedLines = $derived.by(() => {
+    const set = new Set<number>();
+    for (const entry of Object.values(annotations)) {
+      for (let i = entry.range.start; i <= entry.range.end; i++) {
+        set.add(i);
+      }
+    }
+    return set;
+  });
 
   function get(range: Range): JSONContent | undefined {
     return annotations[rangeToKey(range)]?.content;
@@ -79,12 +93,7 @@ export function useAnnotations(options: UseAnnotationsOptions) {
   }
 
   function hasAnnotation(displayIdx: number): boolean {
-    for (const entry of Object.values(annotations)) {
-      if (isLineInRange(displayIdx, entry.range)) {
-        return true;
-      }
-    }
-    return false;
+    return annotatedLines.has(displayIdx);
   }
 
   function allRanges(): Array<{ key: string; start: number; end: number }> {
