@@ -58,10 +58,16 @@ export function useAnnotations(options: UseAnnotationsOptions) {
         start: Math.min(range.start, range.end),
         end: Math.max(range.start, range.end)
       };
-      annotations[key] = {
-        range: normalizedRange,
-        content,
-      };
+      // Mutate content in place for an existing annotation, so editing (which fires
+      // per keystroke) doesn't change the `annotations` key set — `annotatedLines`
+      // only reads ranges, so it stays valid and hasAnnotation doesn't re-run on all
+      // ~10k lines. Only creating a new annotation changes the key set.
+      const existing = annotations[key];
+      if (existing) {
+        existing.content = content;
+      } else {
+        annotations[key] = { range: normalizedRange, content };
+      }
       const nodes = extractContentNodes(content);
       await invoke('upsert_annotation', {
         path: coords.path,
