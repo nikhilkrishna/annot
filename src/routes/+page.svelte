@@ -211,10 +211,9 @@
 
   // Search (composable)
   function scrollToDisplayIndex(displayIndex: number) {
-    if (!contentEl) return;
-    const targetY = (displayIndex - 1) * LINE_HEIGHT;
-    const viewportCenter = viewportHeight / 2;
-    contentEl.scrollTop = Math.max(0, targetY - viewportCenter);
+    contentEl
+      ?.querySelector(`[data-display-idx="${displayIndex}"]`)
+      ?.scrollIntoView({ block: 'center' });
   }
   const search = useSearch(() => lines, scrollToDisplayIndex);
 
@@ -308,19 +307,6 @@
   $effect(() => {
     document.documentElement.style.setProperty('--content-zoom', String(contentZoom));
   });
-
-  // Virtual scrolling state
-  const LINE_HEIGHT = 22;
-  const BUFFER_LINES = 10;
-  let scrollTop = $state(0);
-  let viewportHeight = $state(700);
-
-  // Virtual scroll computed values
-  let startIndex = $derived(Math.max(0, Math.floor(scrollTop / LINE_HEIGHT) - BUFFER_LINES));
-  let endIndex = $derived(Math.min(lines.length, Math.ceil((scrollTop + viewportHeight) / LINE_HEIGHT) + BUFFER_LINES));
-  let visibleLines = $derived(lines.slice(startIndex, endIndex));
-  let translateY = $derived(startIndex * LINE_HEIGHT);
-  let totalHeight = $derived(lines.length * LINE_HEIGHT);
 
   // Get all annotation ranges for overlay rendering
   let annotationRanges = $derived(annotationState.allRanges());
