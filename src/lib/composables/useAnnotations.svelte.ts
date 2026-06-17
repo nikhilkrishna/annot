@@ -32,6 +32,18 @@ export function useAnnotations(options: UseAnnotationsOptions) {
     return set;
   });
 
+  // Maps each annotation's end line to its entry. `getAtLine` is called per
+  // line render (via getRangeKeyForLine), so a linear scan is O(N·A) across a
+  // full render — same shape as the hasAnnotation cost above. In-place content
+  // edits don't change which end lines exist, so this stays valid while typing.
+  const byEndLine = $derived.by(() => {
+    const map = new Map<number, { key: string; content: JSONContent }>();
+    for (const [key, entry] of Object.entries(annotations)) {
+      map.set(entry.range.end, { key, content: entry.content });
+    }
+    return map;
+  });
+
   function get(range: Range): JSONContent | undefined {
     return annotations[rangeToKey(range)]?.content;
   }
@@ -90,12 +102,7 @@ export function useAnnotations(options: UseAnnotationsOptions) {
   }
 
   function getAtLine(displayIdx: number): { key: string; content: JSONContent } | null {
-    for (const [key, entry] of Object.entries(annotations)) {
-      if (entry.range.end === displayIdx) {
-        return { key, content: entry.content };
-      }
-    }
-    return null;
+    return byEndLine.get(displayIdx) ?? null;
   }
 
   function hasAnnotation(displayIdx: number): boolean {
