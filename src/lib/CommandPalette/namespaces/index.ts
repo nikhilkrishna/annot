@@ -1,6 +1,6 @@
 // Namespace registry and QueryContext factory for CommandPalette
 
-import type { QueryContext, Namespace } from '../engine/types';
+import type { QueryContext, Namespace, Item } from '../engine/types';
 import { fuzzySearch } from '$lib/fuzzy';
 import { tagsNamespace, getTagItems, filterTagItems } from './tags';
 import { exitModesNamespace, getExitModeItems, filterExitModeItems } from './exit-modes';
@@ -12,6 +12,26 @@ import { themeNamespace, getThemeItems, filterThemeItems } from './theme';
 
 const namespaces: Namespace[] = [tagsNamespace, exitModesNamespace, bookmarksNamespace, copyNamespace, obsidianNamespace, saveNamespace, themeNamespace];
 
+const getItemsMap: Record<string, () => Item[]> = {
+  tags: getTagItems,
+  'exit-modes': getExitModeItems,
+  bookmarks: getBookmarkItems,
+  copy: getCopyItems,
+  save: getSaveItems,
+  obsidian: getObsidianItems,
+  theme: getThemeItems,
+};
+
+const filterItemsMap: Record<string, (query: string) => Item[]> = {
+  tags: filterTagItems,
+  'exit-modes': filterExitModeItems,
+  bookmarks: filterBookmarkItems,
+  copy: filterCopyItems,
+  save: filterSaveItems,
+  obsidian: filterObsidianItems,
+  theme: filterThemeItems,
+};
+
 export function createQueryContext(): QueryContext {
   return {
     namespaces,
@@ -21,25 +41,11 @@ export function createQueryContext(): QueryContext {
     },
 
     getItems(namespace: Namespace) {
-      if (namespace.id === 'tags') return getTagItems();
-      if (namespace.id === 'exit-modes') return getExitModeItems();
-      if (namespace.id === 'bookmarks') return getBookmarkItems();
-      if (namespace.id === 'copy') return getCopyItems();
-      if (namespace.id === 'save') return getSaveItems();
-      if (namespace.id === 'obsidian') return getObsidianItems();
-      if (namespace.id === 'theme') return getThemeItems();
-      return [];
+      return getItemsMap[namespace.id]?.() ?? [];
     },
 
     filterItems(namespace: Namespace, query: string) {
-      if (namespace.id === 'tags') return filterTagItems(query);
-      if (namespace.id === 'exit-modes') return filterExitModeItems(query);
-      if (namespace.id === 'bookmarks') return filterBookmarkItems(query);
-      if (namespace.id === 'copy') return filterCopyItems(query);
-      if (namespace.id === 'save') return filterSaveItems(query);
-      if (namespace.id === 'obsidian') return filterObsidianItems(query);
-      if (namespace.id === 'theme') return filterThemeItems(query);
-      return [];
+      return filterItemsMap[namespace.id]?.(query) ?? [];
     },
   };
 }

@@ -119,7 +119,7 @@ fn merge_collections<T: Mergeable>(
 }
 
 /// Write content to a file atomically (write to temp, then rename).
-fn atomic_write(path: &Path, content: &str) -> io::Result<()> {
+pub(crate) fn atomic_write(path: &Path, content: &str) -> io::Result<()> {
     let temp = path.with_extension("json.tmp");
     fs::write(&temp, content)?;
     fs::rename(&temp, path)?;

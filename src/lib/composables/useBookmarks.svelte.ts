@@ -7,45 +7,7 @@ export interface LineRange {
   id: string;
 }
 
-export interface UseBookmarks {
-  /** All bookmarks (reactive). */
-  readonly all: Bookmark[];
-  /** Lookup by ID. */
-  readonly byId: Map<string, Bookmark>;
-  /** Selection bookmarks as line ranges for visual indicators. */
-  readonly lineRanges: LineRange[];
-
-  /** Current session bookmark state. */
-  readonly isSessionBookmarked: boolean;
-  readonly sessionBookmarkId: string | null;
-  /** Last created bookmark ID (for [e] edit flow). */
-  readonly lastCreatedId: string | null;
-
-  // CRUD operations
-  createSession(label?: string): Promise<Bookmark>;
-  createSelection(start: number, end: number, label?: string): Promise<Bookmark>;
-  update(id: string, label: string): Promise<void>;
-  delete(id: string): Promise<void>;
-
-  // Session bookmark toggle (used by header button)
-  toggleSession(): Promise<void>;
-  // Selection bookmark toggle (create or delete if same range)
-  toggleSelection(start: number, end: number): Promise<void>;
-
-  // Query
-  findByLineRange(start: number, end: number): Bookmark | undefined;
-  isLineInBookmarkedRange(displayIdx: number): boolean;
-  isFirstLineOfBookmark(displayIdx: number): boolean;
-  getBookmarkIdAtStart(displayIdx: number): string | undefined;
-
-  // Clear last created (for edit flow)
-  clearLastCreated(): void;
-
-  // Reload from disk (window focus)
-  reloadFromSnapshot(diskBookmarks: Bookmark[]): void;
-}
-
-export function useBookmarks(initialBookmarks: Bookmark[] = []): UseBookmarks {
+export function useBookmarks(initialBookmarks: Bookmark[] = []) {
   let bookmarks = $state<Bookmark[]>(initialBookmarks);
 
   // Session bookmark tracking
