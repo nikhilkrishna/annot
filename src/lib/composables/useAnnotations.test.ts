@@ -43,14 +43,37 @@ describe('useAnnotations', () => {
 
     await state.upsert({ start: 5, end: 10 }, content);
 
+    // Local state updates synchronously; backend sync is debounced until flush.
     expect(state.annotations['5-10']).toBeDefined();
     expect(state.annotations['5-10'].content).toEqual(content);
+
+    await state.flush();
     expect(invoke).toHaveBeenCalledWith('upsert_annotation', {
       path: '/test/file.ts',
       startLine: 5,
       endLine: 10,
       content: expect.any(Array),
     });
+  });
+
+  it('debounces backend sync and coalesces repeated edits', async () => {
+    const state = useAnnotations({ getLines });
+    const content = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Test' }] }] };
+
+    // Rapid edits to the same range (the per-keystroke case) update local state
+    // immediately but must not each fire an IPC.
+    await state.upsert({ start: 5, end: 10 }, content);
+    await state.upsert({ start: 5, end: 10 }, content);
+    await state.upsert({ start: 5, end: 10 }, content);
+    expect(invoke).not.toHaveBeenCalled();
+
+    // Flush sends a single coalesced upsert for the three edits.
+    await state.flush();
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(invoke).toHaveBeenCalledWith(
+      'upsert_annotation',
+      expect.objectContaining({ startLine: 5, endLine: 10 })
+    );
   });
 
   it('deletes annotation when content is null', async () => {
@@ -61,10 +84,11 @@ describe('useAnnotations', () => {
     await state.upsert({ start: 5, end: 10 }, content);
     expect(state.annotations['5-10']).toBeDefined();
 
-    // Then remove it
+    // Then remove it — coalesces with the pending upsert to a single delete.
     await state.upsert({ start: 5, end: 10 }, null);
-
     expect(state.annotations['5-10']).toBeUndefined();
+
+    await state.flush();
     expect(invoke).toHaveBeenCalledWith('delete_annotation', {
       path: '/test/file.ts',
       startLine: 5,

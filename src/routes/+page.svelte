@@ -757,6 +757,9 @@
         unlisten();  // Remove listener before closing to prevent re-entry
 
         try {
+          // Flush any debounced annotation writes before the backend reads its
+          // in-memory state — otherwise the last keystrokes never reach it.
+          await annotationState.flush();
           await invoke('finish_review');
         } catch (e) {
           console.error('Failed to finish review:', e);

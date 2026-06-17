@@ -52,6 +52,61 @@ export function useAnnotations(options: UseAnnotationsOptions) {
     return annotations[key];
   }
 
+  // Backend syncs pending a flush, coalesced per annotation key. The editor's
+  // onUpdate fires once per keystroke; local `annotations` state updates
+  // immediately (so the UI stays reactive), but the IPC — which serializes the
+  // whole content tree across the JS↔Rust bridge every call — is debounced.
+  // The backend keeps annotations in memory and only reads them at
+  // finish_review, so `flush()` MUST run before the window closes or the last
+  // keystrokes are lost (wired in +page.svelte's onCloseRequested).
+  type PendingSync =
+    | { op: 'upsert'; path: string; startLine: number; endLine: number; content: ReturnType<typeof extractContentNodes> }
+    | { op: 'delete'; path: string; startLine: number; endLine: number };
+
+  const pending = new Map<string, PendingSync>();
+  let flushTimer: ReturnType<typeof setTimeout> | null = null;
+  const FLUSH_DELAY_MS = 250;
+
+  function cancelFlush(): void {
+    if (flushTimer !== null) {
+      clearTimeout(flushTimer);
+      flushTimer = null;
+    }
+  }
+
+  async function flush(): Promise<void> {
+    cancelFlush();
+    if (pending.size === 0) return;
+    // Snapshot and clear synchronously so keystrokes landing during the await
+    // accumulate into a fresh batch rather than being dropped.
+    const ops = [...pending.values()];
+    pending.clear();
+    await Promise.all(
+      ops.map((op) =>
+        op.op === 'upsert'
+          ? invoke('upsert_annotation', {
+              path: op.path,
+              startLine: op.startLine,
+              endLine: op.endLine,
+              content: op.content
+            })
+          : invoke('delete_annotation', {
+              path: op.path,
+              startLine: op.startLine,
+              endLine: op.endLine
+            })
+      )
+    );
+  }
+
+  function scheduleFlush(): void {
+    cancelFlush();
+    flushTimer = setTimeout(() => {
+      flushTimer = null;
+      flush().catch((e) => console.error('Failed to sync annotations:', e));
+    }, FLUSH_DELAY_MS);
+  }
+
   async function upsert(range: Range, content: JSONContent | null): Promise<void> {
     const key = rangeToKey(range);
     const lines = options.getLines();
@@ -80,21 +135,23 @@ export function useAnnotations(options: UseAnnotationsOptions) {
       } else {
         annotations[key] = { range: normalizedRange, content };
       }
-      const nodes = extractContentNodes(content);
-      await invoke('upsert_annotation', {
+      pending.set(key, {
+        op: 'upsert',
         path: coords.path,
         startLine: coords.startLine,
         endLine: coords.endLine,
-        content: nodes
+        content: extractContentNodes(content)
       });
     } else {
       delete annotations[key];
-      await invoke('delete_annotation', {
+      pending.set(key, {
+        op: 'delete',
         path: coords.path,
         startLine: coords.startLine,
         endLine: coords.endLine
       });
     }
+    scheduleFlush();
   }
 
   function remove(key: string): void {
@@ -146,6 +203,7 @@ export function useAnnotations(options: UseAnnotationsOptions) {
     get,
     getByKey,
     upsert,
+    flush,
     remove,
     getAtLine,
     hasAnnotation,
