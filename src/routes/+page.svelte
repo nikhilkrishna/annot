@@ -127,28 +127,29 @@
   function updateCurrentPosition() {
     if (!contentEl) return;
 
-    const lineEls = contentEl.querySelectorAll('.line');
-    const scrollTop = contentEl.scrollTop;
+    // Find the line at the top of the visible area by hit-testing. Robust to code
+    // blocks / portals whose lines have a different offsetParent — offsetTop is not
+    // globally monotonic, so reading/searching it picks the wrong line. This is one
+    // O(1) hit test instead of reading offsetTop on all ~10k lines every frame.
+    const rect = contentEl.getBoundingClientRect();
+    const x = rect.left + 12;
+    let lineEl: HTMLElement | null = null;
+    // Probe a few rows down to clear separators / inter-segment gaps at the top edge.
+    for (let dy = 1; dy <= 48 && !lineEl; dy += 8) {
+      const el = document.elementFromPoint(x, rect.top + dy);
+      lineEl = (el?.closest('[data-display-idx]') as HTMLElement | null) ?? null;
+    }
+    if (!lineEl) return;
 
-    for (const el of lineEls) {
-      const htmlEl = el as HTMLElement;
-      if (htmlEl.offsetTop >= scrollTop) {
-        const displayIdx = parseInt(htmlEl.dataset.displayIdx ?? '1', 10);
-
-        if (diffMetadata) {
-          // Diff mode: hunk boundaries use display_line (position in rendered view),
-          // so we pass displayIdx directly
-          contentTracking.updateFromLine(displayIdx);
-        } else {
-          // Markdown/source mode: section boundaries use source_line from the
-          // original file, so we need the actual source line number
-          const line = lines[displayIdx - 1];
-          const sourceLineNum = line ? getLineNumber(line) : null;
-          if (sourceLineNum === null) continue;
-          contentTracking.updateFromLine(sourceLineNum);
-        }
-        break;
-      }
+    const displayIdx = parseInt(lineEl.dataset.displayIdx ?? '1', 10);
+    if (diffMetadata) {
+      // Diff mode: hunk boundaries use display_line (position in rendered view)
+      contentTracking.updateFromLine(displayIdx);
+    } else {
+      // Markdown/source mode: section boundaries use source_line from the file
+      const line = lines[displayIdx - 1];
+      const sourceLineNum = line ? getLineNumber(line) : null;
+      if (sourceLineNum !== null) contentTracking.updateFromLine(sourceLineNum);
     }
   }
 
