@@ -129,12 +129,16 @@ div.line {
 	tab-size: 4;
 }
 
-/* Preview highlight (hover state - lighter than selection) */
-div.line.preview {
-	background-color: var(--selection-bg-preview);
+/* Hover highlight — CSS-driven so mouse-move never re-renders 10k lines.
+   Scoped to the idle phase to match the old "hover only from idle" behavior.
+   Mirrors the .selected look, which is what hovering produced before. */
+.content.phase-idle div.line:hover {
+	background-color: var(--selection-bg);
 }
 
-div.line.preview::before {
+/* Left accent bar on hover — only for plain lines; annotated/bookmarked/
+   terraform/selected keep their own ::before border. */
+.content.phase-idle div.line:not(.selected):not(.annotated):not(.bookmarked):not(.has-terraform):hover::before {
 	content: "";
 	position: absolute;
 	left: 0;
@@ -142,7 +146,6 @@ div.line.preview::before {
 	bottom: 0;
 	width: 3px;
 	background: var(--selection-border);
-	opacity: 0.5;
 }
 
 /* Selection (amber family - matches hl) */
@@ -305,8 +308,8 @@ div.line.bookmarked.has-terraform::before {
 	box-shadow: 0 3px 6px rgba(0,0,0,0.15);
 }
 
-/* Show add button on preview lines (hover state) */
-div.line.preview .add-btn {
+/* Show add button on hover (idle phase) */
+.content.phase-idle div.line:hover .add-btn {
 	display: flex;
 }
 
@@ -329,9 +332,11 @@ div.line.preview .add-btn {
 	pointer-events: auto;
 }
 
-/* Gutter styling in preview state */
-div.line.preview .gutter {
+/* Gutter styling on hover (mirrors .gutter.selected) */
+.content.phase-idle div.line:hover .gutter {
+	background-color: var(--selection-bg);
 	color: var(--text-secondary);
+	border-right-color: var(--selection-border);
 }
 
 /* Code content */

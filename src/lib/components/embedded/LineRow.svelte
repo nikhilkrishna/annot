@@ -57,7 +57,6 @@
   // Unified state derivation from context
   const selected = $derived(ctx.interaction.isLineHighlighted(displayIndex));
   const annotated = $derived(ctx.annotations.hasAnnotation(displayIndex));
-  const preview = $derived(ctx.interaction.isLinePreview(displayIndex));
   const markdownMetadata = $derived(ctx.markdownMetadata);
 
   // Terraform region indicator (shows on first line of region)
@@ -165,7 +164,6 @@
   class="line {extraClasses}"
   class:selected
   class:annotated
-  class:preview
   class:bookmarked={isBookmarked}
   class:has-terraform={inTerraformRegion}
   data-display-idx={displayIndex}

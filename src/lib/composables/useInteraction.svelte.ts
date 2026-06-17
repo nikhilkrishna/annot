@@ -22,7 +22,6 @@ export type ModalLock =
  */
 export type UiState =
   | { phase: 'idle' }
-  | { phase: 'hovering'; line: number }
   | { phase: 'selecting'; anchor: number; current: number }
   | { phase: 'committed'; range: Range; pendingChoice: boolean }
   | { phase: 'editing'; editor: EditorKind }
@@ -32,8 +31,6 @@ export type UiState =
 export type Phase = UiState['phase'];
 
 export type UiAction =
-  | { type: 'HOVER'; line: number }
-  | { type: 'HOVER_END' }
   | { type: 'START_SELECT'; anchor: number }
   | { type: 'EXTEND_SELECT'; to: number }
   | { type: 'COMMIT_SELECT'; pendingChoice: boolean }
@@ -55,15 +52,6 @@ const DESTRUCTIVE_ACTIONS: UiAction['type'][] = ['START_SELECT', 'CLOSE_EDITOR',
  */
 export function uiReducer(state: UiState, action: UiAction): UiState {
   switch (action.type) {
-    case 'HOVER':
-      // Can only hover from idle
-      if (state.phase !== 'idle') return state;
-      return { phase: 'hovering', line: action.line };
-
-    case 'HOVER_END':
-      if (state.phase !== 'hovering') return state;
-      return { phase: 'idle' };
-
     case 'START_SELECT':
       // Can start selecting from any phase (interrupts current state)
       return { phase: 'selecting', anchor: action.anchor, current: action.anchor };
@@ -78,9 +66,8 @@ export function uiReducer(state: UiState, action: UiAction): UiState {
       return { phase: 'committed', range, pendingChoice: action.pendingChoice };
 
     case 'OPEN_EDITOR':
-      // Can open from committed, idle, hovering, or editing (to switch editors)
-      // Hovering is just a visual state - shouldn't block opening session editor
-      if (state.phase === 'committed' || state.phase === 'idle' || state.phase === 'hovering' || state.phase === 'editing') {
+      // Can open from committed, idle, or editing (to switch editors)
+      if (state.phase === 'committed' || state.phase === 'idle' || state.phase === 'editing') {
         return { phase: 'editing', editor: action.editor };
       }
       return state;
@@ -154,6 +141,12 @@ export function useInteraction(options: UseInteractionOptions) {
   // Drag modifier tracking (c or b key during drag) - ephemeral, not part of UiState
   let dragModifier = $state<'c' | 'b' | null>(null);
 
+  // Hovered line — deliberately NOT part of the reducer state. Hover changes on
+  // every mouse-move; if 10k LineRows derived from it they'd all re-run each move.
+  // The hover *visual* is pure CSS (:hover); this value only feeds keyboard actions
+  // that need "the line under the cursor" (bookmark/annotate without a selection).
+  let hoverLine = $state<number | null>(null);
+
   // Dispatch action through reducer, respecting modal lock
   function dispatch(action: UiAction): { blocked: boolean } {
     if (modalLock !== null) {
@@ -190,7 +183,7 @@ export function useInteraction(options: UseInteractionOptions) {
   }
 
   function getHoverLine(): number | null {
-    return state.phase === 'hovering' ? state.line : null;
+    return hoverLine;
   }
 
   function getPendingChoice(): boolean {
@@ -201,9 +194,6 @@ export function useInteraction(options: UseInteractionOptions) {
    * Check if a line should show selection highlight.
    */
   function isLineHighlighted(displayIdx: number): boolean {
-    if (state.phase === 'hovering' && state.line === displayIdx) {
-      return true;
-    }
     const range = getRange();
     if (range && (state.phase === 'selecting' || state.phase === 'committed' || state.phase === 'editing' || state.phase === 'terraforming')) {
       return isLineInRange(displayIdx, range);
@@ -215,14 +205,14 @@ export function useInteraction(options: UseInteractionOptions) {
    * Check if a line is in preview mode (hover, not committed).
    */
   function isLinePreview(displayIdx: number): boolean {
-    return state.phase === 'hovering' && state.line === displayIdx;
+    return hoverLine === displayIdx;
   }
 
   /**
    * Check if the "+" button should be visible on this line.
    */
   function showAddButton(displayIdx: number): boolean {
-    return state.phase === 'hovering' && state.line === displayIdx;
+    return hoverLine === displayIdx;
   }
 
   // --- Pointer handlers ---
@@ -302,24 +292,19 @@ export function useInteraction(options: UseInteractionOptions) {
   // --- Line hover handlers ---
 
   function handleLineEnter(displayIdx: number) {
+    // Only track hover when idle — matches the old "hover only from idle" behavior.
+    // No dispatch: this must not reassign `state`, or every LineRow re-renders.
     if (state.phase === 'idle' && options.isLineSelectable(displayIdx)) {
-      dispatch({ type: 'HOVER', line: displayIdx });
-    } else if (state.phase === 'hovering' && options.isLineSelectable(displayIdx)) {
-      // Update hover line directly (same phase, just different line)
-      state = { phase: 'hovering', line: displayIdx };
+      hoverLine = displayIdx;
     }
   }
 
   function handleLineLeave() {
-    if (state.phase === 'hovering') {
-      dispatch({ type: 'HOVER_END' });
-    }
+    hoverLine = null;
   }
 
   function handleContentLeave() {
-    if (state.phase === 'hovering') {
-      dispatch({ type: 'HOVER_END' });
-    }
+    hoverLine = null;
   }
 
   // --- Gutter click ---
@@ -430,8 +415,8 @@ export function useInteraction(options: UseInteractionOptions) {
     if (state.phase === 'committed') {
       return { start: state.range.start, end: state.range.end };
     }
-    if (state.phase === 'hovering') {
-      return { start: state.line, end: state.line };
+    if (state.phase === 'idle' && hoverLine !== null) {
+      return { start: hoverLine, end: hoverLine };
     }
     return null;
   }

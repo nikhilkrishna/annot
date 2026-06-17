@@ -879,7 +879,6 @@
       class="content"
       class:shift-held={interaction.isShiftHeld}
       class:phase-idle={interaction.phase === 'idle'}
-      class:phase-hovering={interaction.phase === 'hovering'}
       class:phase-selecting={interaction.phase === 'selecting'}
       class:phase-committed={interaction.phase === 'committed'}
       class:phase-editing={interaction.phase === 'editing'}
