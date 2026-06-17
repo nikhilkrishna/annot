@@ -86,6 +86,33 @@ nix profile install path:.   # run outside nix develop
 
 MCP registration — same as Ubuntu above.
 
+## Windows
+
+Prerequisites:
+- **Rust** — install via [rustup](https://rustup.rs/)
+- **Node.js 24** — install via [nodejs.org](https://nodejs.org/)
+- **pnpm** — `npm install -g pnpm`
+- **WebView2 Runtime** — preinstalled on Windows 11; Windows 10 users should download the
+  [Evergreen Bootstrapper](https://developer.microsoft.com/microsoft-edge/webview2/)
+
+Build:
+
+```powershell
+pnpm install
+pnpm tauri build                      # release binary: src-tauri\target\release\annot.exe
+pnpm tauri build --debug --no-bundle  # debug build (matches what CI does)
+```
+
+MCP registration (CLI, same as Ubuntu):
+
+```bash
+claude mcp add --scope user annot annot mcp
+```
+
+Make sure `annot.exe` is on your `PATH`. See **Window creation & the WebView2 deadlock**
+below for Windows-specific pitfalls — in particular, kill any stray `annot.exe`
+process before rebuilding or you'll get `Access is denied (os error 5)`.
+
 ## Architecture
 
 **Backend** (`src-tauri/src/`):

@@ -2,7 +2,7 @@
 
 An annotation tool for human-in-the-loop AI workflows.
 
-> **Platform**: macOS (Apple Silicon) and Linux (NixOS/Wayland tested). Not tested on Windows.
+> **Platform**: macOS (Apple Silicon), Linux (NixOS/Wayland tested), and Windows (build from source).
 
 ![annot screenshot](docs/screenshot.png)
 
@@ -98,6 +98,31 @@ nix profile add path:.
 
 </details>
 
+<details>
+<summary>Build from source (Windows)</summary>
+
+Install prerequisites:
+
+1. **Rust** — install via [rustup](https://rustup.rs/)
+2. **Node.js 24** — install via [nodejs.org](https://nodejs.org/)
+3. **pnpm** — `npm install -g pnpm`
+4. **WebView2 Runtime** — preinstalled on Windows 11; Windows 10 users can download the
+   [Evergreen Bootstrapper](https://developer.microsoft.com/microsoft-edge/webview2/) from Microsoft.
+
+Clone and build:
+
+```powershell
+git clone https://github.com/denolehov/annot.git
+cd annot
+pnpm install
+pnpm tauri build
+```
+
+The binary is at `src-tauri\target\release\annot.exe`. There is no installer bundle yet —
+add the `src-tauri\target\release\` directory to your `PATH`, or reference the `.exe` directly.
+
+</details>
+
 ## Quick start
 
 ### With Claude Code
@@ -120,6 +145,15 @@ nix profile add path:.
 ```bash
 claude mcp add --scope user annot annot mcp
 ```
+
+**Windows** — use the CLI (same as Linux):
+
+```bash
+claude mcp add --scope user annot annot mcp
+```
+
+Make sure `annot.exe` is on your `PATH` first (see build instructions above), or pass
+the full path: `claude mcp add --scope user annot "C:\path\to\annot.exe" mcp`.
 
 Claude now has review tools (`review_file`, `review_diff`, `review_content`) and bookmark tools (`get_bookmark`, `list_bookmarks`). Ask it to review something and a window opens for your feedback.
 
