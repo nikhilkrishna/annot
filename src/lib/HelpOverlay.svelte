@@ -32,35 +32,8 @@
       category: 'Editor',
       items: [
         { keys: ['#'], description: 'Insert tag' },
-        { keys: ['@'], description: 'Reference (annotations, bookmarks, sections, files)' },
+        { keys: ['@'], description: 'Reference (annotations, sections, files)' },
         { keys: ['/'], description: 'Slash commands (/replace, /excalidraw)' },
-      ]
-    },
-    {
-      category: 'Bookmarks',
-      items: [
-        { keys: ['b'], description: 'Bookmark hovered line or selection' },
-        { keys: [keys.shift, 'B'], description: 'Bookmark entire session' },
-        { keys: ['e'], description: 'Edit last created bookmark' },
-      ]
-    },
-    {
-      category: 'Terraform',
-      items: [
-        { keys: ['t'], description: 'Terraform hovered line or selection' },
-        { keys: ['1-5'], description: 'Toggle form (table/list/prose/diagram/code)' },
-        { keys: ['+'], description: 'Expand (mass)' },
-        { keys: ['-'], description: 'Condense (mass)' },
-        { keys: ['x'], description: 'Toggle remove (mass)' },
-        { keys: ['f'], description: 'Focus (gravity)' },
-        { keys: ['b'], description: 'Blur (gravity)' },
-        { keys: ['p'], description: 'Pin (gravity)' },
-        { keys: ['d'], description: 'Dissolve (gravity)' },
-        { keys: ['<'], description: 'Lean in (direction)' },
-        { keys: ['>'], description: 'Move away (direction)' },
-        { keys: ['r'], description: 'Toggle reframe (direction)' },
-        { keys: [keys.cmd, '↵'], description: 'Save terraform' },
-        { keys: [keys.cmd, 'D'], description: 'Delete terraform' },
       ]
     },
     {
@@ -77,7 +50,6 @@
       category: 'Selection',
       items: [
         { keys: [keys.shift, 'drag'], description: 'Select line range' },
-        { keys: ['Esc'], description: 'Cancel pending choice' },
       ]
     },
     {

@@ -136,9 +136,9 @@ div.line {
 	background-color: var(--selection-bg);
 }
 
-/* Left accent bar on hover — only for plain lines; annotated/bookmarked/
-   terraform/selected keep their own ::before border. */
-.content.phase-idle div.line:not(.selected):not(.annotated):not(.bookmarked):not(.has-terraform):hover::before {
+/* Left accent bar on hover — only for plain lines; annotated/selected
+   keep their own ::before border. */
+.content.phase-idle div.line:not(.selected):not(.annotated):hover::before {
 	content: "";
 	position: absolute;
 	left: 0;
@@ -190,42 +190,6 @@ div.line.annotated .gutter {
 	color: var(--text-secondary);
 }
 
-/* Bookmarked lines - left border dominates annotated/selected ::before */
-div.line.bookmarked::before {
-	content: "";
-	position: absolute;
-	left: 0;
-	top: 0;
-	bottom: 0;
-	width: 3px;
-	background: var(--bookmark-color, #ef4444);
-	z-index: 1;
-}
-
-/* Terraform region indicator - purple left border on first line */
-div.line.has-terraform::before {
-	content: "";
-	position: absolute;
-	left: 0;
-	top: 0;
-	bottom: 0;
-	width: 3px;
-	background: var(--terraform-border);
-	z-index: 1;
-}
-
-/* Both bookmark and terraform - diagonal stripes (continuous across lines) */
-div.line.bookmarked.has-terraform::before {
-	background: repeating-linear-gradient(
-		-45deg,
-		var(--bookmark-color, #ef4444),
-		var(--bookmark-color, #ef4444) 3px,
-		var(--terraform-border) 3px,
-		var(--terraform-border) 6px
-	);
-	background-attachment: fixed;
-}
-
 /* Line actions container - holds trailing icons with consistent spacing */
 .line-actions {
 	display: inline-flex;
@@ -254,22 +218,6 @@ div.line.bookmarked.has-terraform::before {
 .line-action:focus-visible {
 	outline: 1px solid var(--focus-ring);
 	outline-offset: 2px;
-}
-
-/* Bookmark indicator */
-.bookmark-indicator {
-	color: var(--bookmark-color, #ef4444);
-	font-size: 16px;
-}
-
-/* Terraform indicator */
-.terraform-indicator {
-	color: var(--terraform-icon);
-}
-
-.terraform-indicator svg {
-	width: 14px;
-	height: 14px;
 }
 
 /* Shift+drag cursor */
@@ -737,61 +685,4 @@ div.line.separator-line:hover {
 		var(--hl-peak) 4%,
 		var(--hl-mid)
 	);
-}
-
-/* ===========================================
-   CHOICE BUTTONS - Annotate/Bookmark choice after shift-drag
-   =========================================== */
-
-.choice-buttons {
-	display: flex;
-	gap: 8px;
-	padding: 6px 0 6px calc(var(--gutter-width) + 8px);
-	animation: choice-fade-in 0.15s ease;
-}
-
-.choice-button {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	padding: 4px 8px;
-	background: var(--bg-window);
-	border: 1px solid var(--border-strong);
-	border-radius: 4px;
-	font-size: 12px;
-	font-family: var(--font-ui);
-	color: var(--text-primary);
-	cursor: pointer;
-	transition: border-color 0.1s ease, background 0.1s ease;
-}
-
-.choice-button:hover,
-.choice-button:focus {
-	background: var(--bg-main);
-	border-color: var(--selection-border);
-}
-
-.choice-button:focus {
-	outline: none;
-}
-
-.choice-button.terraform:hover,
-.choice-button.terraform:focus {
-	border-color: var(--terraform-border);
-}
-
-.choice-button.bookmark:hover,
-.choice-button.bookmark:focus {
-	border-color: var(--danger);
-}
-
-@keyframes choice-fade-in {
-	from {
-		opacity: 0;
-		transform: translateY(-4px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
 }

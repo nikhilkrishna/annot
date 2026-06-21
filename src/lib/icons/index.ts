@@ -1,6 +1,5 @@
 export { default as SearchIcon } from './SearchIcon.svelte';
 export { default as HashtagIcon } from './HashtagIcon.svelte';
-export { default as BookmarkIcon } from './BookmarkIcon.svelte';
 export { default as ExitIcon } from './ExitIcon.svelte';
 export { default as CopyIcon } from './CopyIcon.svelte';
 export { default as SaveIcon } from './SaveIcon.svelte';
@@ -21,11 +20,6 @@ export { default as XMarkIcon } from './XMarkIcon.svelte';
 export { default as ImageIcon } from './ImageIcon.svelte';
 export { default as ClipboardIcon } from './ClipboardIcon.svelte';
 export { default as GlobeIcon } from './GlobeIcon.svelte';
-export { default as TerraformIcon } from './TerraformIcon.svelte';
-export { default as FormIcon } from './FormIcon.svelte';
-export { default as MassIcon } from './MassIcon.svelte';
-export { default as GravityIcon } from './GravityIcon.svelte';
-export { default as DirectionIcon } from './DirectionIcon.svelte';
 export { default as PaperclipIcon } from './PaperclipIcon.svelte';
 export { default as ChatBubbleIcon } from './ChatBubbleIcon.svelte';
 export { default as HeadingH1Icon } from './HeadingH1Icon.svelte';

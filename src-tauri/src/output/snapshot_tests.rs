@@ -10,15 +10,13 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::path::PathBuf;
 
-use chrono::{DateTime, Utc};
 use tempfile::NamedTempFile;
 
 use crate::input::{CliSource, ContentSource, DiffSource, McpSource};
 use crate::review::Review;
 use crate::state::{
-    AnnotationRefSnapshot, Annotation, Bookmark, BookmarkSnapshot, ContentMetadata,
-    ContentModel, ContentNode, ExitMode, ExitModeSource, Line, LineOrigin, LineRange,
-    LineSemantics, RefSnapshot, SessionType, UserConfig,
+    AnnotationRefSnapshot, Annotation, ContentMetadata, ContentModel, ContentNode, ExitMode,
+    ExitModeSource, Line, LineOrigin, LineRange, LineSemantics, RefSnapshot, UserConfig,
 };
 
 use super::{format_output, OutputMode};
@@ -616,13 +614,11 @@ fn context_line_whitespace_only() {
 
 /// Comprehensive test that exercises every output feature:
 /// - TAGS section (multiple tags)
-/// - BOOKMARKS section (both "this session" and pre-existing)
 /// - CONTEXT (would need portals, skipped for simplicity)
 /// - GENERAL block (session comment with tags and refs)
 /// - NEXT block (exit mode)
 /// - Multiple annotations with:
 ///   - Tags
-///   - Bookmark references (BookmarkRef and Ref variants)
 ///   - Annotation references
 ///   - File references
 ///   - Replace blocks
@@ -633,9 +629,6 @@ fn context_line_whitespace_only() {
 /// - Saved to path
 #[test]
 fn kitchen_sink_everything() {
-    // Fixed timestamp so the rendered "Created:" date is deterministic.
-    let fixed_created_at: DateTime<Utc> = "2026-02-16T00:00:00Z".parse().unwrap();
-
     let config = UserConfig::with_data(
         vec![], // tags loaded from annotations
         vec![ExitMode {
@@ -648,36 +641,9 @@ fn kitchen_sink_everything() {
         }],
     );
 
-    // Create a pre-existing bookmark (not created this session)
-    let old_bookmark = Bookmark {
-        id: "oldbookmark1".to_string(),
-        label: Some("auth-validation".to_string()),
-        created_at: fixed_created_at,
-        project_path: Some(PathBuf::from("/projects/myapp")),
-        snapshot: BookmarkSnapshot::Selection {
-            source_type: SessionType::File,
-            source_title: "src/auth.rs".to_string(),
-            context: "fn validate_token(token: &str) -> Result<User, AuthError> {\n    // validation logic\n}".to_string(),
-            selected_text: "validate_token".to_string(),
-        },
-    };
-
-    // Create a bookmark from "this session"
-    let new_bookmark = Bookmark {
-        id: "newbookmark2".to_string(),
-        label: Some("error-handler".to_string()),
-        created_at: fixed_created_at,
-        project_path: None,
-        snapshot: BookmarkSnapshot::Session {
-            source_type: SessionType::Content,
-            source_title: "error-handling-plan.md".to_string(),
-            context: "# Error Handling Plan\n\nHandle errors gracefully.".to_string(),
-        },
-    };
-
     let mut annotations = HashMap::new();
 
-    // Annotation 1: Tags + text + bookmark ref (legacy format)
+    // Annotation 1: Tags + text
     annotations.insert(
         LineRange::new(10, 12),
         Annotation {
@@ -690,15 +656,7 @@ fn kitchen_sink_everything() {
                     instruction: "Review for security vulnerabilities".to_string(),
                 },
                 ContentNode::Text {
-                    text: " This authentication logic needs review. See ".to_string(),
-                },
-                ContentNode::BookmarkRef {
-                    id: "oldbookmark1".to_string(),
-                    label: "auth-validation".to_string(),
-                    bookmark: old_bookmark.clone(),
-                },
-                ContentNode::Text {
-                    text: " for context.".to_string(),
+                    text: " This authentication logic needs review.".to_string(),
                 },
             ],
         },
@@ -727,7 +685,7 @@ fn kitchen_sink_everything() {
         },
     );
 
-    // Annotation 3: Annotation ref + file ref + new-style bookmark ref
+    // Annotation 3: Annotation ref + file ref
     annotations.insert(
         LineRange::new(40, 42),
         Annotation {
@@ -760,13 +718,7 @@ fn kitchen_sink_everything() {
                     path: "src/handlers/api.rs".to_string(),
                 },
                 ContentNode::Text {
-                    text: ". Also related to ".to_string(),
-                },
-                ContentNode::Ref {
-                    ref_type: "bookmark".to_string(),
-                    snapshot: RefSnapshot::Bookmark {
-                        bookmark: new_bookmark.clone(),
-                    },
+                    text: ".".to_string(),
                 },
             ],
         },
@@ -826,7 +778,7 @@ fn kitchen_sink_everything() {
         config,
     );
 
-    // Set session comment with tags and bookmark ref
+    // Set session comment with tags
     review.session_comment = Some(vec![
         ContentNode::Text {
             text: "Overall code review feedback.\n\n".to_string(),
@@ -837,20 +789,9 @@ fn kitchen_sink_everything() {
             instruction: "Performance consideration".to_string(),
         },
         ContentNode::Text {
-            text: " Watch for N+1 queries in the data layer.\n\nSee also: ".to_string(),
-        },
-        ContentNode::BookmarkRef {
-            id: "newbookmark2".to_string(),
-            label: "error-handler".to_string(),
-            bookmark: new_bookmark.clone(),
-        },
-        ContentNode::Text {
-            text: " for error handling patterns.".to_string(),
+            text: " Watch for N+1 queries in the data layer.".to_string(),
         },
     ]);
-
-    // Mark new_bookmark as created this session
-    review.session_created_bookmarks.insert("newbookmark2".to_string());
 
     // Set exit mode
     review.selected_exit_mode_id = Some("apply-with-changes".to_string());
@@ -961,423 +902,6 @@ description: "Create a well-structured git commit"
     );
 
     insta::assert_snapshot!(stable_output);
-}
-
-// ========== Terraform Regions ==========
-
-#[test]
-fn terraform_single_region() {
-    use crate::terraform::{FormType, Intensity, MassChange, TerraformIntent, TerraformRegion};
-
-    let source = ContentSource::Cli(CliSource::File {
-        path: PathBuf::from("plan.md"),
-    });
-    let content = ContentModel {
-        label: "plan.md".to_string(),
-        lines: make_lines("plan.md", 1, 20),
-        source,
-        metadata: ContentMetadata::Plain,
-        portals: Vec::new(),
-    };
-    let config = UserConfig::empty();
-    let mut review = Review::cli(content, config, "main".to_string());
-
-    // Add a terraform region
-    if let Some(file) = review.files.values_mut().next() {
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 5,
-            end_line: 8,
-            intent: TerraformIntent::Transform {
-                form: vec![FormType::Table],
-                mass: Some(MassChange::Expand {
-                    intensity: Intensity::Moderately,
-                }),
-                gravity: None,
-                direction: None,
-            },
-        });
-    }
-
-    let output = format_output(&review, OutputMode::Cli).text;
-    insta::assert_snapshot!(output);
-}
-
-#[test]
-fn terraform_multiple_regions() {
-    use crate::terraform::{
-        DirectionDirective, FormType, GravityChange, Intensity, MassChange, TerraformIntent,
-        TerraformRegion,
-    };
-
-    let source = ContentSource::Cli(CliSource::File {
-        path: PathBuf::from("content.md"),
-    });
-    let content = ContentModel {
-        label: "content.md".to_string(),
-        lines: make_lines("content.md", 1, 30),
-        source,
-        metadata: ContentMetadata::Plain,
-        portals: Vec::new(),
-    };
-    let config = UserConfig::empty();
-    let mut review = Review::cli(content, config, "main".to_string());
-
-    if let Some(file) = review.files.values_mut().next() {
-        // First region: expand into table and prose
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 5,
-            end_line: 8,
-            intent: TerraformIntent::Transform {
-                form: vec![FormType::Table, FormType::Prose],
-                mass: Some(MassChange::Expand {
-                    intensity: Intensity::Moderately,
-                }),
-                gravity: Some(GravityChange::Focus {
-                    intensity: Intensity::Slightly,
-                }),
-                direction: None,
-            },
-        });
-
-        // Second region: condense with direction
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 15,
-            end_line: 18,
-            intent: TerraformIntent::Transform {
-                form: vec![],
-                mass: Some(MassChange::Condense {
-                    intensity: Intensity::Significantly,
-                }),
-                gravity: None,
-                direction: Some(DirectionDirective::MoveAway {
-                    intensity: Intensity::Moderately,
-                }),
-            },
-        });
-    }
-
-    let output = format_output(&review, OutputMode::Cli).text;
-    insta::assert_snapshot!(output);
-}
-
-#[test]
-fn terraform_with_annotations() {
-    use crate::terraform::{FormType, Intensity, MassChange, TerraformIntent, TerraformRegion};
-
-    let source = ContentSource::Cli(CliSource::File {
-        path: PathBuf::from("mixed.md"),
-    });
-    let content = ContentModel {
-        label: "mixed.md".to_string(),
-        lines: make_lines("mixed.md", 1, 30),
-        source,
-        metadata: ContentMetadata::Plain,
-        portals: Vec::new(),
-    };
-    let config = UserConfig::empty();
-    let mut review = Review::cli(content, config, "main".to_string());
-
-    if let Some(file) = review.files.values_mut().next() {
-        // Terraform region
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 5,
-            end_line: 8,
-            intent: TerraformIntent::Transform {
-                form: vec![FormType::List],
-                mass: Some(MassChange::Expand {
-                    intensity: Intensity::Moderately,
-                }),
-                gravity: None,
-                direction: None,
-            },
-        });
-
-        // Annotation
-        file.annotations.insert(
-            LineRange::new(15, 16),
-            Annotation {
-                start_line: 15,
-                end_line: 16,
-                content: vec![ContentNode::Text {
-                    text: "This needs clarification".to_string(),
-                }],
-            },
-        );
-    }
-
-    let output = format_output(&review, OutputMode::Cli).text;
-    insta::assert_snapshot!(output);
-}
-
-#[test]
-fn terraform_pin_and_dissolve() {
-    use crate::terraform::{TerraformIntent, TerraformRegion};
-
-    let source = ContentSource::Cli(CliSource::File {
-        path: PathBuf::from("gravity.md"),
-    });
-    let content = ContentModel {
-        label: "gravity.md".to_string(),
-        lines: make_lines("gravity.md", 1, 20),
-        source,
-        metadata: ContentMetadata::Plain,
-        portals: Vec::new(),
-    };
-    let config = UserConfig::empty();
-    let mut review = Review::cli(content, config, "main".to_string());
-
-    if let Some(file) = review.files.values_mut().next() {
-        // Pin region
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 3,
-            end_line: 4,
-            intent: TerraformIntent::Pin,
-        });
-
-        // Dissolve region
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 12,
-            end_line: 14,
-            intent: TerraformIntent::Dissolve { direction: None },
-        });
-    }
-
-    let output = format_output(&review, OutputMode::Cli).text;
-    insta::assert_snapshot!(output);
-}
-
-#[test]
-fn terraform_reframe() {
-    use crate::terraform::{DirectionDirective, TerraformIntent, TerraformRegion};
-
-    let source = ContentSource::Cli(CliSource::File {
-        path: PathBuf::from("reframe.md"),
-    });
-    let content = ContentModel {
-        label: "reframe.md".to_string(),
-        lines: make_lines("reframe.md", 1, 15),
-        source,
-        metadata: ContentMetadata::Plain,
-        portals: Vec::new(),
-    };
-    let config = UserConfig::empty();
-    let mut review = Review::cli(content, config, "main".to_string());
-
-    if let Some(file) = review.files.values_mut().next() {
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 5,
-            end_line: 8,
-            intent: TerraformIntent::Transform {
-                form: vec![],
-                mass: None,
-                gravity: None,
-                direction: Some(DirectionDirective::Reframe),
-            },
-        });
-    }
-
-    let output = format_output(&review, OutputMode::Cli).text;
-    insta::assert_snapshot!(output);
-}
-
-#[test]
-fn terraform_remove() {
-    use crate::terraform::{TerraformIntent, TerraformRegion};
-
-    let source = ContentSource::Cli(CliSource::File {
-        path: PathBuf::from("remove.md"),
-    });
-    let content = ContentModel {
-        label: "remove.md".to_string(),
-        lines: make_lines("remove.md", 1, 15),
-        source,
-        metadata: ContentMetadata::Plain,
-        portals: Vec::new(),
-    };
-    let config = UserConfig::empty();
-    let mut review = Review::cli(content, config, "main".to_string());
-
-    if let Some(file) = review.files.values_mut().next() {
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 5,
-            end_line: 8,
-            intent: TerraformIntent::Remove,
-        });
-    }
-
-    let output = format_output(&review, OutputMode::Cli).text;
-    insta::assert_snapshot!(output);
-}
-
-/// Comprehensive terraform test that exercises every feature:
-/// - Multiple terraform regions with all intents
-/// - All form types (single, double, multi-select)
-/// - All mass changes (expand, condense)
-/// - All gravity changes (focus, blur)
-/// - Terminal states (remove, pin, dissolve)
-/// - All direction directives (lean-in, move-away, reframe)
-/// - All intensity levels
-/// - Combined with annotations
-/// - Combined with session comment and exit mode
-#[test]
-fn terraform_kitchen_sink() {
-    use crate::terraform::{
-        DirectionDirective, FormType, GravityChange, Intensity, MassChange, TerraformIntent,
-        TerraformRegion,
-    };
-
-    let config = UserConfig::with_data(
-        vec![],
-        vec![ExitMode {
-            id: "iterate".to_string(),
-            name: "Iterate".to_string(),
-            color: "#8b5cf6".to_string(),
-            instruction: "Apply terraform directives and regenerate content".to_string(),
-            order: 0,
-            source: ExitModeSource::Persisted,
-        }],
-    );
-
-    let source = ContentSource::Cli(CliSource::File {
-        path: PathBuf::from("design-doc.md"),
-    });
-    let content = ContentModel {
-        label: "design-doc.md".to_string(),
-        lines: make_lines("design-doc.md", 1, 80),
-        source,
-        metadata: ContentMetadata::Plain,
-        portals: Vec::new(),
-    };
-    let mut review = Review::cli(content, config, "main".to_string());
-
-    if let Some(file) = review.files.values_mut().next() {
-        // Region 1: Single form + expand slightly + focus moderately + lean-in completely
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 5,
-            end_line: 8,
-            intent: TerraformIntent::Transform {
-                form: vec![FormType::Table],
-                mass: Some(MassChange::Expand {
-                    intensity: Intensity::Slightly,
-                }),
-                gravity: Some(GravityChange::Focus {
-                    intensity: Intensity::Moderately,
-                }),
-                direction: Some(DirectionDirective::LeanIn {
-                    intensity: Intensity::Significantly,
-                }),
-            },
-        });
-
-        // Region 2: Two forms + condense significantly
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 15,
-            end_line: 18,
-            intent: TerraformIntent::Transform {
-                form: vec![FormType::List, FormType::Diagram],
-                mass: Some(MassChange::Condense {
-                    intensity: Intensity::Significantly,
-                }),
-                gravity: None,
-                direction: None,
-            },
-        });
-
-        // Region 3: Multiple forms + blur a bit + move-away moderately
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 25,
-            end_line: 28,
-            intent: TerraformIntent::Transform {
-                form: vec![FormType::Prose, FormType::Code, FormType::Table],
-                mass: None,
-                gravity: Some(GravityChange::Blur {
-                    intensity: Intensity::Moderately,
-                }),
-                direction: Some(DirectionDirective::MoveAway {
-                    intensity: Intensity::Moderately,
-                }),
-            },
-        });
-
-        // Region 4: Pin only (preserve exactly)
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 35,
-            end_line: 36,
-            intent: TerraformIntent::Pin,
-        });
-
-        // Region 5: Dissolve only (integrate into surroundings)
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 42,
-            end_line: 45,
-            intent: TerraformIntent::Dissolve { direction: None },
-        });
-
-        // Region 6: Remove entirely
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 52,
-            end_line: 55,
-            intent: TerraformIntent::Remove,
-        });
-
-        // Region 7: Reframe only
-        file.terraform_regions.push(TerraformRegion {
-            start_line: 62,
-            end_line: 65,
-            intent: TerraformIntent::Transform {
-                form: vec![FormType::Prose],
-                mass: None,
-                gravity: None,
-                direction: Some(DirectionDirective::Reframe),
-            },
-        });
-
-        // Add some annotations alongside terraform regions
-        file.annotations.insert(
-            LineRange::new(10, 12),
-            Annotation {
-                start_line: 10,
-                end_line: 12,
-                content: vec![
-                    ContentNode::Tag {
-                        id: "clarity001".to_string(),
-                        name: "CLARITY".to_string(),
-                        instruction: "Needs clearer explanation".to_string(),
-                    },
-                    ContentNode::Text {
-                        text: " This section is confusing".to_string(),
-                    },
-                ],
-            },
-        );
-
-        file.annotations.insert(
-            LineRange::new(70, 72),
-            Annotation {
-                start_line: 70,
-                end_line: 72,
-                content: vec![ContentNode::Text {
-                    text: "Good example, keep this".to_string(),
-                }],
-            },
-        );
-    }
-
-    // Set session comment
-    review.session_comment = Some(vec![
-        ContentNode::Text {
-            text: "Overall feedback on the design document.\n\n".to_string(),
-        },
-        ContentNode::Text {
-            text: "The structure needs work - use terraform directives to reshape.".to_string(),
-        },
-    ]);
-
-    // Set exit mode
-    review.selected_exit_mode_id = Some("iterate".to_string());
-
-    let output = format_output(&review, OutputMode::Cli).text;
-    insta::assert_snapshot!(output);
 }
 
 // ========== JSON Output Tests ==========

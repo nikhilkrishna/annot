@@ -17,15 +17,12 @@ use crate::lang;
 use crate::mcp::tools::SessionImage;
 use crate::portal::LoadedPortal;
 use crate::review::{FileKey, Review};
-use crate::state::{
-    Annotation, Bookmark, ContentModel, ContentNode, LineSemantics,
-    PortalSemantics,
-};
+use crate::state::{Annotation, ContentModel, ContentNode, LineSemantics, PortalSemantics};
 
 pub use builder::{BuilderMode, OutputBuilder, SECTION_DIVIDER, SEPARATOR};
 pub use render::render_content;
 
-use formatters::{calculate_builder_mode, format_annotation, format_bookmark, format_legend, format_terraform_region};
+use formatters::{calculate_builder_mode, format_annotation, format_legend};
 
 /// Output mode determines how content is formatted.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -54,8 +51,6 @@ pub struct FormatMetadata {
     pub general_comment: Option<String>,
     pub exit_mode: Option<String>,
     pub general_comment_count: usize,
-    pub terraform_count: usize,
-    pub bookmark_count: usize,
 }
 
 /// Serialize a FormatResult as JSON for `--json` CLI output.
@@ -71,8 +66,6 @@ pub fn format_json(result: &FormatResult) -> String {
         "general_comment": result.metadata.general_comment,
         "exit_mode": result.metadata.exit_mode,
         "general_comment_count": result.metadata.general_comment_count,
-        "terraform_count": result.metadata.terraform_count,
-        "bookmark_count": result.metadata.bookmark_count,
     });
     serde_json::to_string(&json).expect("FormatResult JSON serialization should not fail")
 }
@@ -309,70 +302,16 @@ fn collect_unique_tags(review: &Review) -> BTreeMap<String, String> {
     tags
 }
 
-/// Collect unique bookmarks referenced from all content nodes (session comment + annotations).
-/// Returns embedded Bookmark data in order of first occurrence (keyed by ID).
-fn collect_unique_bookmarks(review: &Review) -> Vec<Bookmark> {
-    use indexmap::IndexMap;
-    let mut bookmarks: IndexMap<String, Bookmark> = IndexMap::new();
-
-    let mut process_nodes = |nodes: &[ContentNode]| {
-        for node in nodes {
-            match node {
-                ContentNode::BookmarkRef { id, bookmark, .. } => {
-                    bookmarks
-                        .entry(id.clone())
-                        .or_insert_with(|| bookmark.clone());
-                }
-                ContentNode::Ref { snapshot, .. } => {
-                    if let crate::state::RefSnapshot::Bookmark { bookmark } = snapshot {
-                        bookmarks
-                            .entry(bookmark.id.clone())
-                            .or_insert_with(|| bookmark.clone());
-                    }
-                }
-                // Other node types don't contain bookmark references
-                ContentNode::Text { .. }
-                | ContentNode::Tag { .. }
-                | ContentNode::Media { .. }
-                | ContentNode::Excalidraw { .. }
-                | ContentNode::Replace { .. }
-                | ContentNode::Error { .. }
-                | ContentNode::Paste { .. }
-                | ContentNode::File { .. } => {}
-            }
-        }
-    };
-
-    // Collect from session comment
-    if let Some(ref comment) = review.session_comment {
-        process_nodes(comment);
-    }
-
-    // Collect from all file annotations
-    for file in review.files.values() {
-        for annotation in file.annotations.values() {
-            process_nodes(&annotation.content);
-        }
-    }
-
-    bookmarks.into_values().collect()
-}
-
 /// Format all annotations as structured output for LLM consumption.
 pub fn format_output(review: &Review, mode: OutputMode) -> FormatResult {
     // Get content from root_view
     let content = review.root_view.content();
 
-    // Check if ANY file has annotations or terraform regions
+    // Check if ANY file has annotations
     let has_annotations = review
         .files
         .values()
         .any(|target| !target.annotations.is_empty());
-
-    let has_terraform = review
-        .files
-        .values()
-        .any(|target| !target.terraform_regions.is_empty());
 
     let has_exit_mode = review.selected_exit_mode_id.is_some();
     let has_session_comment = review
@@ -382,7 +321,7 @@ pub fn format_output(review: &Review, mode: OutputMode) -> FormatResult {
         .unwrap_or(false);
     let has_saved_to = review.saved_to.is_some();
 
-    if !has_exit_mode && !has_annotations && !has_terraform && !has_session_comment && !has_saved_to {
+    if !has_exit_mode && !has_annotations && !has_session_comment && !has_saved_to {
         return FormatResult {
             text: String::new(),
             images: Vec::new(),
@@ -403,17 +342,6 @@ pub fn format_output(review: &Review, mode: OutputMode) -> FormatResult {
     if !unique_tags.is_empty() {
         out.section("TAGS", |b| {
             format_legend(b, &unique_tags);
-        });
-    }
-
-    // BOOKMARKS block (if any bookmarks are referenced)
-    let unique_bookmarks = collect_unique_bookmarks(review);
-    if !unique_bookmarks.is_empty() {
-        out.section("BOOKMARKS", |b| {
-            for bookmark in &unique_bookmarks {
-                let created_this_session = review.session_created_bookmarks.contains(&bookmark.id);
-                format_bookmark(b, bookmark, created_this_session);
-            }
         });
     }
 
@@ -483,40 +411,10 @@ pub fn format_output(review: &Review, mode: OutputMode) -> FormatResult {
         }
     }
 
-    // Add divider before terraform/annotations if we had any header content
+    // Add divider before annotations if we had any header content
     let has_header_content = has_context || has_session_comment || has_exit_mode;
-    if (has_terraform || has_annotations) && has_header_content {
+    if has_annotations && has_header_content {
         out.raw("---\n\n");
-    }
-
-    // Build terraform blocks (if any)
-    if has_terraform {
-        out.raw_line("TERRAFORM:");
-        out.blank_line();
-
-        let files_with_terraform = collect_files_with_terraform(review);
-        let mut first_block = true;
-
-        for (display_path, target) in &files_with_terraform {
-            // Sort terraform regions by start line
-            let mut sorted_regions: Vec<&crate::terraform::TerraformRegion> =
-                target.terraform_regions.iter().collect();
-            sorted_regions.sort_by_key(|r| r.start_line);
-
-            for region in sorted_regions {
-                if !first_block {
-                    out.divider();
-                }
-                first_block = false;
-                format_terraform_region(&mut out, content, region, display_path);
-            }
-        }
-
-        // Add divider between terraform and annotations
-        if has_annotations {
-            out.blank_line();
-            out.raw("---\n\n");
-        }
     }
 
     // Build annotation blocks (if any)
@@ -562,17 +460,9 @@ pub fn format_output(review: &Review, mode: OutputMode) -> FormatResult {
         .map(|target| target.annotations.len())
         .sum();
 
-    let terraform_count = review
-        .files
-        .values()
-        .map(|target| target.terraform_regions.len())
-        .sum();
-
     let general_comment_count = if review.session_comment.as_ref()
         .map(|c| !c.is_empty())
         .unwrap_or(false) { 1 } else { 0 };
-
-    let bookmark_count = collect_unique_bookmarks(review).len();
 
     let general_comment = review.session_comment.as_ref().and_then(|comment| {
         if comment.is_empty() {
@@ -599,31 +489,19 @@ pub fn format_output(review: &Review, mode: OutputMode) -> FormatResult {
             general_comment,
             exit_mode,
             general_comment_count,
-            terraform_count,
-            bookmark_count,
         },
     }
 }
 
-/// Calculate max line number across all annotations and terraform regions.
+/// Calculate max line number across all annotations.
 fn calculate_max_line(review: &Review) -> u32 {
-    let annotation_max = review
+    review
         .files
         .values()
         .flat_map(|target| target.annotations.values())
         .map(|a| a.end_line)
         .max()
-        .unwrap_or(0);
-
-    let terraform_max = review
-        .files
-        .values()
-        .flat_map(|target| target.terraform_regions.iter())
-        .map(|r| r.end_line)
-        .max()
-        .unwrap_or(0);
-
-    annotation_max.max(terraform_max)
+        .unwrap_or(0)
 }
 
 /// Collect files with annotations in display order.
@@ -650,39 +528,6 @@ fn collect_files_with_annotations(review: &Review) -> Vec<(String, &crate::revie
             .files
             .iter()
             .filter(|(_, target)| !target.annotations.is_empty())
-            .filter_map(|(key, target)| match key {
-                FileKey::Path(p) => Some((p.display().to_string(), target)),
-                FileKey::Ephemeral { label } => Some((label.clone(), target)),
-                FileKey::DiffFile { .. } => None, // Should not happen in file mode
-            })
-            .collect()
-    }
-}
-
-/// Collect files with terraform regions in display order.
-fn collect_files_with_terraform(review: &Review) -> Vec<(String, &crate::review::AnnotationTarget)> {
-    if let Some(diff_files) = review.root_view.diff_files() {
-        // Diff mode: use DiffFileView for display paths, enumerate for index
-        diff_files
-            .iter()
-            .enumerate()
-            .filter_map(|(index, df)| {
-                let key = FileKey::diff_file(index);
-                review.files.get(&key).and_then(|target| {
-                    if target.terraform_regions.is_empty() {
-                        None
-                    } else {
-                        Some((df.path.display().to_string(), target))
-                    }
-                })
-            })
-            .collect()
-    } else {
-        // File mode: extract display string from FileKey
-        review
-            .files
-            .iter()
-            .filter(|(_, target)| !target.terraform_regions.is_empty())
             .filter_map(|(key, target)| match key {
                 FileKey::Path(p) => Some((p.display().to_string(), target)),
                 FileKey::Ephemeral { label } => Some((label.clone(), target)),

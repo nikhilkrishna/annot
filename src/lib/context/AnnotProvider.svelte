@@ -18,8 +18,6 @@
   import type { useExitModes } from '$lib/composables/useExitModes.svelte';
   import type { useSearch } from '$lib/composables/useSearch.svelte';
   import type { useMermaid } from '$lib/composables/useMermaid.svelte';
-  import type { useBookmarks } from '$lib/composables/useBookmarks.svelte';
-  import type { useTerraformRegions } from '$lib/composables/useTerraformRegions.svelte';
 
   interface Props {
     // Reactive data
@@ -35,8 +33,6 @@
     exitModes: ReturnType<typeof useExitModes>;
     search: ReturnType<typeof useSearch>;
     mermaid: ReturnType<typeof useMermaid>;
-    bookmarks: ReturnType<typeof useBookmarks>;
-    terraform: ReturnType<typeof useTerraformRegions>;
 
     // Utilities
     showToast: (message: string, duration?: number) => void;
@@ -57,8 +53,6 @@
     exitModes,
     search,
     mermaid,
-    bookmarks,
-    terraform,
     showToast,
     isLineSelectable,
     getOriginalLinesForRange,
@@ -93,24 +87,14 @@
    * Get the range key for a line. Used by embedded components to connect
    * annotation slots to their content.
    *
-   * Always returns existing annotation keys. Only returns new selection key
-   * when not in pendingChoice mode (waiting for user to choose annotate/bookmark).
+   * Always returns existing annotation keys, plus the new selection key for
+   * the last selected line once a selection is committed.
    */
   function getRangeKeyForLine(displayIndex: number): string | null {
     // Always show existing annotations
     const annotationAtLine = annotations.getAtLine(displayIndex);
     if (annotationAtLine) {
       return annotationAtLine.key;
-    }
-
-    // Don't show new editor during pendingChoice (user choosing annotate vs bookmark)
-    if (interaction.pendingChoice) {
-      return null;
-    }
-
-    // Don't show new editor during terraforming (terraform palette is open)
-    if (interaction.phase === 'terraforming') {
-      return null;
     }
 
     const isLast = displayIndex === lastSelectedLine && selection && !isDragging;
@@ -128,8 +112,6 @@
     get exitModes() { return exitModes; },
     get search() { return search; },
     get mermaid() { return mermaid; },
-    get bookmarks() { return bookmarks; },
-    get terraform() { return terraform; },
 
     get selection() { return selection; },
     get isDragging() { return isDragging; },

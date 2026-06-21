@@ -84,15 +84,12 @@ export interface ContentResponse {
   metadata: ContentMetadata;
   /** Whether image paste is allowed (MCP content mode). */
   allows_image_paste: boolean;
-  /** All bookmarks for @ autocomplete. */
-  bookmarks: Bookmark[];
 }
 
 /** Config snapshot returned by reload_config command. */
 export interface ConfigSnapshot {
   tags: Tag[];
   exit_modes: ExitMode[];
-  bookmarks: Bookmark[];
 }
 
 // Diff types
@@ -161,7 +158,7 @@ export interface Tag {
 }
 
 // Content node types for structured annotation content (output format)
-export type ContentNode = TextNode | TagNode | MediaNode | ExcalidrawNode | ReplaceNode | ErrorNode | PasteNode | BookmarkRefNode | RefNode | FileNode;
+export type ContentNode = TextNode | TagNode | MediaNode | ExcalidrawNode | ReplaceNode | ErrorNode | PasteNode | RefNode | FileNode;
 
 export interface TextNode {
   type: 'text';
@@ -204,14 +201,6 @@ export interface PasteNode {
   content: string; // Full pasted text
 }
 
-export interface BookmarkRefNode {
-  type: 'bookmarkref';
-  id: string; // Full resolved bookmark ID
-  label: string; // Cached label for display
-  /** Full bookmark data captured at insertion time (for detachment). */
-  bookmark: Bookmark;
-}
-
 // =============================================================================
 // Unified Reference System (@ mentions)
 // =============================================================================
@@ -240,14 +229,14 @@ export interface HeadingRefSnapshot {
   title: string;
 }
 
-/** Unified reference snapshot - annotation, bookmark, or heading. */
-export type RefSnapshot = AnnotationRefSnapshot | { type: 'bookmark'; bookmark: Bookmark } | HeadingRefSnapshot;
+/** Unified reference snapshot - annotation or heading. */
+export type RefSnapshot = AnnotationRefSnapshot | HeadingRefSnapshot;
 
-/** Unified reference node - replaces BookmarkRefNode for new references. */
+/** Unified reference node for @ mentions. */
 export interface RefNode {
   type: 'ref';
-  /** Discriminator for ref type: 'annotation', 'bookmark', or 'heading' */
-  ref_type: 'annotation' | 'bookmark' | 'heading';
+  /** Discriminator for ref type: 'annotation' or 'heading' */
+  ref_type: 'annotation' | 'heading';
   /** Self-contained snapshot (survives source deletion) */
   snapshot: RefSnapshot;
 }
@@ -266,116 +255,4 @@ export type { JSONContent } from '@tiptap/core';
 export interface SaveContentResponse {
   saved_path: string;
   new_label: string;
-}
-
-// =============================================================================
-// Bookmarks — capture moments of attention for later reference
-// =============================================================================
-
-/** Type of session where the bookmark was created. */
-export type SessionType = 'file' | 'diff' | 'content';
-
-/** The content snapshot captured by a bookmark. */
-export type BookmarkSnapshot =
-  | {
-      type: 'session';
-      source_type: SessionType;
-      source_title: string;
-      context: string;
-    }
-  | {
-      type: 'selection';
-      source_type: SessionType;
-      source_title: string;
-      context: string;
-      selected_text: string;
-    };
-
-/** A bookmark capturing a moment of attention during an annot session. */
-export interface Bookmark {
-  /** Unique 12-character base32 ID (prefix-matchable). */
-  id: string;
-  /** User-provided or auto-derived label. */
-  label: string | null;
-  /** When this bookmark was created (ISO 8601). */
-  created_at: string;
-  /** Project context (cwd at creation time). */
-  project_path: string | null;
-  /** The captured content snapshot. */
-  snapshot: BookmarkSnapshot;
-}
-
-// =============================================================================
-// Terraform — structured controls for guiding AI content transformation
-// =============================================================================
-
-/** Target format for restructuring. */
-export type FormType = 'table' | 'list' | 'prose' | 'diagram' | 'code';
-
-/** Intensity level for graduated controls. */
-export type Intensity = 'slightly' | 'moderately' | 'significantly';
-
-/** All intensity levels in order (for slider). */
-export const INTENSITY_LEVELS: Intensity[] = ['slightly', 'moderately', 'significantly'];
-
-/** All form types in order (for buttons). */
-export const FORM_TYPES: FormType[] = ['table', 'list', 'prose', 'diagram', 'code'];
-
-/** Mass change: expand or condense (remove is a separate intent). */
-export type MassChange =
-  | { type: 'expand'; intensity: Intensity }
-  | { type: 'condense'; intensity: Intensity };
-
-/** Gravity change: focus or blur (pin/dissolve are separate intents). */
-export type GravityChange =
-  | { type: 'focus'; intensity: Intensity }
-  | { type: 'blur'; intensity: Intensity };
-
-/** Correctness signal: lean-in, move-away, or reframe. */
-export type DirectionDirective =
-  | { type: 'leanin'; intensity: Intensity }
-  | { type: 'moveaway'; intensity: Intensity }
-  | { type: 'reframe' };
-
-/** Type-safe terraform intent — invalid combinations are unrepresentable. */
-export type TerraformIntent =
-  | { kind: 'remove' }
-  | { kind: 'pin' }
-  | { kind: 'dissolve'; direction: DirectionDirective | null }
-  | {
-      kind: 'transform';
-      form: FormType[];
-      mass: MassChange | null;
-      gravity: GravityChange | null;
-      direction: DirectionDirective | null;
-    };
-
-/** A terraform region attached to a line range. */
-export interface TerraformRegion {
-  start_line: number;
-  end_line: number;
-  /** The transformation intent — type-safe combinations only. */
-  intent: TerraformIntent;
-}
-
-/** Create a default empty transform intent. */
-export function emptyTransformIntent(): TerraformIntent {
-  return {
-    kind: 'transform',
-    form: [],
-    mass: null,
-    gravity: null,
-    direction: null
-  };
-}
-
-/** Check if an intent is effectively empty (no transformation requested). */
-export function isIntentEmpty(intent: TerraformIntent): boolean {
-  if (intent.kind !== 'transform') return false;
-  return (
-    intent.form.length === 0 &&
-    intent.mass === null &&
-    intent.gravity === null &&
-    intent.direction === null
-  );
 }

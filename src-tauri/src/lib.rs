@@ -22,17 +22,14 @@ pub mod output;
 pub mod portal;
 pub mod review;
 pub mod state;
-pub mod terraform;
 pub mod window_state;
 
 use commands::{
-    compute_replace_diff, copy_section, copy_to_clipboard, create_bookmark,
-    create_selection_bookmark, cycle_exit_mode, delete_annotation, delete_bookmark,
-    delete_exit_mode, delete_tag, delete_terraform, export_to_obsidian, finish_review,
-    get_bookmarks, get_config, get_content, get_exit_modes, get_tags, get_terraform_phrase,
-    get_terraform_regions, get_theme, reload_config, reorder_exit_modes, save_config,
-    save_content, set_exit_mode, set_session_comment, set_theme, update_bookmark,
-    upsert_annotation, upsert_exit_mode, upsert_tag, upsert_terraform,
+    compute_replace_diff, copy_section, copy_to_clipboard, cycle_exit_mode, delete_annotation,
+    delete_exit_mode, delete_tag, export_to_obsidian, finish_review, get_config, get_content,
+    get_exit_modes, get_tags, get_theme, reload_config, reorder_exit_modes, save_config,
+    save_content, set_exit_mode, set_session_comment, set_theme, upsert_annotation,
+    upsert_exit_mode, upsert_tag,
 };
 use excalidraw_window::{
     close_excalidraw_by_placeholder, excalidraw_cancel, excalidraw_save, get_excalidraw_context,
@@ -50,10 +47,6 @@ macro_rules! all_commands {
             get_content,
             upsert_annotation,
             delete_annotation,
-            upsert_terraform,
-            delete_terraform,
-            get_terraform_regions,
-            get_terraform_phrase,
             finish_review,
             set_exit_mode,
             cycle_exit_mode,
@@ -65,12 +58,7 @@ macro_rules! all_commands {
             upsert_exit_mode,
             delete_exit_mode,
             reorder_exit_modes,
-            get_bookmarks,
             reload_config,
-            create_bookmark,
-            create_selection_bookmark,
-            update_bookmark,
-            delete_bookmark,
             copy_to_clipboard,
             copy_section,
             save_content,
