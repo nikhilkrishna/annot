@@ -1,5 +1,90 @@
 # Changelog
 
+## [0.14.0](https://github.com/nikhilkrishna/annot/compare/v0.13.1...v0.14.0) (2026-06-29)
+
+
+### Features
+
+* add ? help overlay ([7a5e27c](https://github.com/nikhilkrishna/annot/commit/7a5e27cd60ac376091703756edceeb3c053adea3))
+* add /remove command that is like /replace but with empty content ([493a829](https://github.com/nikhilkrishna/annot/commit/493a829bf84379e7e416ac143e470437a83c44a5))
+* add a mermaid target for demo. ([c29075d](https://github.com/nikhilkrishna/annot/commit/c29075d45d1cb6f3241ee9984d7b2f42cb757213))
+* add a mermaid target for demo. ([47877a2](https://github.com/nikhilkrishna/annot/commit/47877a2d5a887f2f9bf3aa777fa4d61ee2f5a5ca))
+* add an ability to copy tables ([5afd422](https://github.com/nikhilkrishna/annot/commit/5afd4223e0873be2624f20cba9f917a877422a1d))
+* add HEX color preview ([7d87463](https://github.com/nikhilkrishna/annot/commit/7d87463456bcce7bd5aaaf15bf869ffd2f71ea77))
+* add Homebrew tap automation to release workflow ([1605ef0](https://github.com/nikhilkrishna/annot/commit/1605ef02ea0c96f3c5698300f8f22b947005a01e))
+* add icons for each of the terraform axis ([d60a402](https://github.com/nikhilkrishna/annot/commit/d60a4026f1112d6f97affd3694a341391185c8e8))
+* add sorting to `annot bookmarks list` command ([3e16168](https://github.com/nikhilkrishna/annot/commit/3e16168c4f9d31515dc8a4628d783668ca63be6a))
+* add support for darwin in flake. ([f899c03](https://github.com/nikhilkrishna/annot/commit/f899c034dfd43d50e1e57326c7b6cd2e7e0d9116))
+* add support for darwin in flake. ([ce6698b](https://github.com/nikhilkrishna/annot/commit/ce6698b3afd4068b398f1ec64f486bbd164b7977))
+* add support for Linux (nixos). ([4d5a96d](https://github.com/nikhilkrishna/annot/commit/4d5a96d123877173e5fec2edac0dcae2345443de))
+* add svg icons to distinguish different item types in @ ref menu ([2f73984](https://github.com/nikhilkrishna/annot/commit/2f73984319fa4bbb303deac90f27c0434c5235f2))
+* add terraform axes precedence rules ([52654f8](https://github.com/nikhilkrishna/annot/commit/52654f8685b21bae080453269b6444e5dd0419cf))
+* add terraform regions for structured content transformation ([bb9c082](https://github.com/nikhilkrishna/annot/commit/bb9c0826091dbd427685dd9469acecb0af62f0ec))
+* add version subcommand ([62d6b74](https://github.com/nikhilkrishna/annot/commit/62d6b7428a05f369bf255f5efc953908c580cd0c))
+* allow referencing markdown headings via @ in annotation ([9eed904](https://github.com/nikhilkrishna/annot/commit/9eed9043ea7fdae9b64ceff520d7dc6971b7106b))
+* CLI --json output, --exit-mode flag, and structured metadata ([16d189d](https://github.com/nikhilkrishna/annot/commit/16d189daf199df9351ba652287ef35a91286e35b))
+* **flake:** add packages.default for nix profile install ([6d8869f](https://github.com/nikhilkrishna/annot/commit/6d8869f11ca347d6bc81549e3f580db72cd81bcc))
+* **linux:** Borderless window for linux ([#55](https://github.com/nikhilkrishna/annot/issues/55)) ([e0e56e1](https://github.com/nikhilkrishna/annot/commit/e0e56e18621b220ef111d1dabfb70d93e8be1304))
+* natural prose terraform directives ([6ce5c0c](https://github.com/nikhilkrishna/annot/commit/6ce5c0c09b22dd7ffd8f513c16ab644bacde2516))
+* platform-aware keyboard shortcut glyphs (⌘/Ctrl, ⌥/Alt, ⇧/Shift) ([83dc717](https://github.com/nikhilkrishna/annot/commit/83dc71785dd50592b8754fd03da07520fbdb5e36))
+* Remove "bookmark" and "terraform" features ([#75](https://github.com/nikhilkrishna/annot/issues/75)) ([8b29ba1](https://github.com/nikhilkrishna/annot/commit/8b29ba19bdc22e013d7c831dee2a68bdf5fe55e1))
+* remove redundant categories from the @ ref menu so that fuzzy search works properly ([d83657b](https://github.com/nikhilkrishna/annot/commit/d83657bf421e15a52c0e72fad79a54584ffaec3c))
+* show toast on successful terraform apply ([45b30fa](https://github.com/nikhilkrishna/annot/commit/45b30fa8d3f086fa4884c31688fbd665e8d92eb3))
+* the bookmarks subcommand is now `annot bookmark` (singular) ([5b4f7ae](https://github.com/nikhilkrishna/annot/commit/5b4f7ae23aacf93f3c85711d78b2bd047b5060af))
+* use fuzzy search in @ annotation menu ([8f35456](https://github.com/nikhilkrishna/annot/commit/8f354560ef056a87319998d81f89cad6bfb92c12))
+* **window-state:** key window geometry by display configuration ([3057359](https://github.com/nikhilkrishna/annot/commit/305735919990c6461db4aa4bcf226b7d216332cc))
+* **windows:** Add Windows compatibility to annot ([#62](https://github.com/nikhilkrishna/annot/issues/62)) ([d6db9b5](https://github.com/nikhilkrishna/annot/commit/d6db9b5ba22043f24123dcad8b3af93917f98f58))
+
+
+### Bug Fixes
+
+* ? help modal layout organization ([4db4b28](https://github.com/nikhilkrishna/annot/commit/4db4b2830a54cc6003512299179c068705a5c6d7))
+* @ ref menu ranking improvements ([7cd2e48](https://github.com/nikhilkrishna/annot/commit/7cd2e48479fb99137087e0c8906a66b4cdea8c62))
+* align sample.md session-comment key with Shift+C ([b109711](https://github.com/nikhilkrishna/annot/commit/b109711b701f642cbd5f8feaa4b193173fc0a9aa))
+* allow blurring the annotation editor if tag/ref/command suggestion menu is active ([e76a1ba](https://github.com/nikhilkrishna/annot/commit/e76a1ba9eb6b0ba03dcc6b125b491fb5eb1245f4))
+* allow opening session editor from hovering phase ([af5a317](https://github.com/nikhilkrishna/annot/commit/af5a3173aa838ab2f19f03b3f512c89c97efa4d8))
+* build workflow now accepts tag param ([8ca04ad](https://github.com/nikhilkrishna/annot/commit/8ca04ad3b2c49e1dc8b85d1a65088b08fe20192b))
+* chip font size is now consistent with the annotation editor size ([3a2ec96](https://github.com/nikhilkrishna/annot/commit/3a2ec96c8165e91859a98f3d1bb82db1a02b6197))
+* **ci:** remove explicit pnpm version to avoid conflict with packageManager field ([ac1083f](https://github.com/nikhilkrishna/annot/commit/ac1083f25dad00af4ee78be27cbc0cdfbbf59a74))
+* contradictory terraform prose outputs are no longer possible ([89017b6](https://github.com/nikhilkrishna/annot/commit/89017b6281cada5dd74179bf5afa484555c57de8))
+* **docs:** use claude mcp add CLI for all platforms in Claude Code setup ([#70](https://github.com/nikhilkrishna/annot/issues/70)) ([78508e1](https://github.com/nikhilkrishna/annot/commit/78508e1f10bb851f85adabcef816ea72a46c0156)), closes [#69](https://github.com/nikhilkrishna/annot/issues/69)
+* eliminate unused_mut warnings on Linux with platform-specific declarations ([6105357](https://github.com/nikhilkrishna/annot/commit/6105357b85f55f723abb1bc0b58845944c678fc3))
+* fix buggy excalidraw close confirmation dialog ([004dc32](https://github.com/nikhilkrishna/annot/commit/004dc324ec2df5ccb01680ab154ab3e6d2767614))
+* flake install in macos. ([0ccb5b0](https://github.com/nikhilkrishna/annot/commit/0ccb5b0a0b740d6c105b035ebfa21f72d4af1a15))
+* flake install in macos. ([d95f823](https://github.com/nikhilkrishna/annot/commit/d95f823ae9ff9a0abfd447ba892dc6a8ef359a13))
+* **flake:** add GStreamer deps and fix WebKit2GTK rendering on Wayland ([d042cfa](https://github.com/nikhilkrishna/annot/commit/d042cfa15bc9cbff978d05788698bf9132448c0b))
+* guard macOS-only Tauri APIs behind cfg(target_os = "macos") ([ced6f84](https://github.com/nikhilkrishna/annot/commit/ced6f849a4d7e7325bcc75f1ddf011eb8c590252))
+* hunk context is now properly tracked in diff mode and shown in ([dae79bb](https://github.com/nikhilkrishna/annot/commit/dae79bb48613b0c21247bb7db01442dd083cb716))
+* include version in release artifact name for Homebrew ([e76e1ca](https://github.com/nikhilkrishna/annot/commit/e76e1ca5a23ec20ea0ddc21b2f45fb633d2d9387))
+* keyboard shortcut fixes for Linux ([433955a](https://github.com/nikhilkrishna/annot/commit/433955a5fdf701c9a451f1ffed334a1858ba952d))
+* **linux:** enable scrollbar interaction in borderless window ([#78](https://github.com/nikhilkrishna/annot/issues/78)) ([532ef0b](https://github.com/nikhilkrishna/annot/commit/532ef0bd98fc351d82c11eebf811b77457959bd9))
+* **linux:** grant start-resize-dragging permission so borderless resize fires ([#68](https://github.com/nikhilkrishna/annot/issues/68)) ([fcc0dbc](https://github.com/nikhilkrishna/annot/commit/fcc0dbcbac6a72aa3ee1779186c5075673dddbb2))
+* **linux:** honor Ctrl+D in command palette delete handlers ([b2b11af](https://github.com/nikhilkrishna/annot/commit/b2b11af6cc0b72c9507066ddb71b49248f46ae07))
+* make non-sensical terraform states impossible to represent ([bf3aa5a](https://github.com/nikhilkrishna/annot/commit/bf3aa5a55432081b5b11a7c8714ead08f3e8c56d))
+* **mcp:** restore the MCP review window onto its remembered monitor ([9818e43](https://github.com/nikhilkrishna/annot/commit/9818e43ec0cfcb21672cdcbaa4f52d4969b36679))
+* **mermaid:** open diagram windows on the remembered monitor ([0bab25b](https://github.com/nikhilkrishna/annot/commit/0bab25b7cfb312e8513266c23e8865a74abd02b1))
+* prevent orphaned excalidraw windows if excalidraw chip was deleted ([d9d5e3e](https://github.com/nikhilkrishna/annot/commit/d9d5e3eda092e829b08ea3b83a78b328bc1810c5))
+* properly track open editor to prevent double open editors ([ee8a06b](https://github.com/nikhilkrishna/annot/commit/ee8a06b3a2e57f1dd59a5737dec1b324fb5cfd2c))
+* reset selected text when selecting for annotation ([0f3b567](https://github.com/nikhilkrishna/annot/commit/0f3b56741c5f8bda481e1e79ecbae6505a7a8f54))
+* sealed annotation editors no longer disappear when selecting new ([d0c63cd](https://github.com/nikhilkrishna/annot/commit/d0c63cde5a4531ad1569a9d34898013c23426165))
+* terraform element padding is now consistent with the annotation editor padding ([46f8a09](https://github.com/nikhilkrishna/annot/commit/46f8a091b3dbad37cfef419b072263ce7b9e6079))
+* treat kotlin syntax as java for highlighting ([646fbec](https://github.com/nikhilkrishna/annot/commit/646fbecb67a5ac34ccfdd30ca927d43cf17831bd))
+* trigger build workflow on release publish event ([45e064b](https://github.com/nikhilkrishna/annot/commit/45e064b85027b9f612640f803d3c2bd2f50cdc7b))
+* update the annot version to 0.8.0. ([8cf869d](https://github.com/nikhilkrishna/annot/commit/8cf869d2983f603a199f1ef7decffcdc82642c22))
+* update the annot version to 0.8.0. ([bcb2b94](https://github.com/nikhilkrishna/annot/commit/bcb2b947bdf140bfce160e0e9bbcd34f936a9d6f))
+* use rangeKey instead of interaction.range in updateAnnotation ([416d536](https://github.com/nikhilkrishna/annot/commit/416d536e6abd2d74c23fe87f81a5e85753145ac9))
+* yaml list items are no longer broken ([72a4ebb](https://github.com/nikhilkrishna/annot/commit/72a4ebbab20955fdcbeea89fa4139477ae784bc0))
+
+
+### Performance Improvements
+
+* **annotations:** debounce per-keystroke annotation sync ([b3efb69](https://github.com/nikhilkrishna/annot/commit/b3efb69ee17128ba150ccff4590784841a61d3ab))
+* **annotations:** edit content in place to avoid per-keystroke re-renders ([d05278d](https://github.com/nikhilkrishna/annot/commit/d05278d5da0cafaa7d59c1abfb347d24b7e72d4a))
+* **annotations:** O(1) line→annotation lookup via end-line map ([3a2b2be](https://github.com/nikhilkrishna/annot/commit/3a2b2be0debec46bdf250506cf032ff2b6593f80))
+* **annotations:** O(1) per-line annotation lookup ([b166498](https://github.com/nikhilkrishna/annot/commit/b166498cdb84d427b38a36f6f49fb8b3b7ddc515))
+* **viewer:** hit-test the current-position lookup ([8e77395](https://github.com/nikhilkrishna/annot/commit/8e7739568127801c23b8a79f9e266501b8954a9c))
+* **viewer:** take hover out of the reactive path ([a125527](https://github.com/nikhilkrishna/annot/commit/a125527ba4e918fecaeb5d75ee11f799f07eba64))
+
 ## [0.13.1](https://github.com/denolehov/annot/compare/v0.13.0...v0.13.1) (2026-06-22)
 
 
